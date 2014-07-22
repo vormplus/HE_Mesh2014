@@ -2,16 +2,17 @@ package wblut.hemesh;
 
 import java.util.Iterator;
 
-import wblut.geom.WB_Distance3D;
+import wblut.geom.WB_Coordinate;
+import wblut.geom.WB_Distance;
 import wblut.geom.WB_Plane;
-import wblut.geom.WB_Point;
+import wblut.geom.WB_Vector;
 
 /**
  * Skew a mesh. Determined by a ground plane, a skew direction and a skew
  * factor.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 public class HEM_Skew extends HEM_Modifier {
 
@@ -19,7 +20,7 @@ public class HEM_Skew extends HEM_Modifier {
 	private WB_Plane groundPlane;
 
 	/** Skew direction. */
-	private WB_Point skewDirection;
+	private WB_Vector skewDirection;
 
 	/** Skew factor. */
 	private double skewFactor;
@@ -36,7 +37,7 @@ public class HEM_Skew extends HEM_Modifier {
 
 	/**
 	 * Set ground plane.
-	 * 
+	 *
 	 * @param P
 	 *            ground plane
 	 * @return self
@@ -48,7 +49,7 @@ public class HEM_Skew extends HEM_Modifier {
 
 	/**
 	 * Sets the ground plane.
-	 * 
+	 *
 	 * @param ox
 	 *            the ox
 	 * @param oy
@@ -71,20 +72,20 @@ public class HEM_Skew extends HEM_Modifier {
 
 	/**
 	 * Set skew direction.
-	 * 
+	 *
 	 * @param p
 	 *            direction
 	 * @return self
 	 */
-	public HEM_Skew setSkewDirection(final WB_Point p) {
-		skewDirection = p.get();
+	public HEM_Skew setSkewDirection(final WB_Coordinate p) {
+		skewDirection = new WB_Vector(p);
 		skewDirection._normalizeSelf();
 		return this;
 	}
 
 	/**
 	 * Sets the skew direction.
-	 * 
+	 *
 	 * @param vx
 	 *            the vx
 	 * @param vy
@@ -95,14 +96,14 @@ public class HEM_Skew extends HEM_Modifier {
 	 */
 	public HEM_Skew setSkewDirection(final double vx, final double vy,
 			final double vz) {
-		skewDirection = new WB_Point(vx, vy, vz);
+		skewDirection = new WB_Vector(vx, vy, vz);
 		skewDirection._normalizeSelf();
 		return this;
 	}
 
 	/**
 	 * Set skew factor, ratio of skew distance to distance to ground plane.
-	 * 
+	 *
 	 * @param f
 	 *            direction
 	 * @return self
@@ -114,7 +115,7 @@ public class HEM_Skew extends HEM_Modifier {
 
 	/**
 	 * Positive only? Only apply modifier to positive side of ground plane.
-	 * 
+	 *
 	 * @param b
 	 *            true, false
 	 * @return self
@@ -126,7 +127,7 @@ public class HEM_Skew extends HEM_Modifier {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.modifiers.HEB_Modifier#modify(wblut.hemesh.HE_Mesh)
 	 */
 	@Override
@@ -137,18 +138,19 @@ public class HEM_Skew extends HEM_Modifier {
 			final Iterator<HE_Vertex> vItr = mesh.vItr();
 			while (vItr.hasNext()) {
 				v = vItr.next();
-				final double d = WB_Distance3D.distance(v, groundPlane);
+				final double d = WB_Distance.getDistance3D(v, groundPlane);
 				if (!posOnly || (d > 0)) {
-					v.pos._addSelf(skewDirection.mul(d * skewFactor));
+					v.getPoint()._addSelf(skewDirection.mul(d * skewFactor));
 				}
 			}
 		}
+		mesh.resetFaces();
 		return mesh;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * wblut.hemesh.modifiers.HEB_Modifier#modifySelected(wblut.hemesh.HE_Mesh)
 	 */
@@ -161,12 +163,13 @@ public class HEM_Skew extends HEM_Modifier {
 			final Iterator<HE_Vertex> vItr = selection.vItr();
 			while (vItr.hasNext()) {
 				v = vItr.next();
-				final double d = WB_Distance3D.distance(v, groundPlane);
+				final double d = WB_Distance.getDistance3D(v, groundPlane);
 				if (!posOnly || (d > 0)) {
-					v.pos._addSelf(skewDirection.mul(d * skewFactor));
+					v.getPoint()._addSelf(skewDirection.mul(d * skewFactor));
 				}
 			}
 		}
+		selection.parent.resetFaces();
 		return selection.parent;
 	}
 }

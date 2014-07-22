@@ -20,15 +20,14 @@ import java.util.Iterator;
 import wblut.geom.WB_Point;
 import wblut.math.WB_MTRandom;
 
-// TODO: Auto-generated Javadoc
 /**
  * Planar subdivision of a mesh. Divides all edges in half. Non-triangular faces
  * are divided in new faces connecting each vertex with the two adjacent mid
  * edge vertices and the face center. Triangular faces are divided in four new
  * triangular faces by connecting the mid edge points. Faces are tris or quads.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 
 public class HES_Planar extends HES_Subdividor {
@@ -58,7 +57,7 @@ public class HES_Planar extends HES_Subdividor {
 
 	/**
 	 * Set random mode.
-	 * 
+	 *
 	 * @param b
 	 *            true, false
 	 * @return self
@@ -70,7 +69,7 @@ public class HES_Planar extends HES_Subdividor {
 
 	/**
 	 * Set random seed.
-	 * 
+	 *
 	 * @param seed
 	 *            seed
 	 * @return self
@@ -82,7 +81,7 @@ public class HES_Planar extends HES_Subdividor {
 
 	/**
 	 * Set preservation of triangular faces.
-	 * 
+	 *
 	 * @param b
 	 *            true, false
 	 * @return self
@@ -94,7 +93,7 @@ public class HES_Planar extends HES_Subdividor {
 
 	/**
 	 * Set range of random variation.
-	 * 
+	 *
 	 * @param r
 	 *            range (0..1)
 	 * @return self
@@ -112,7 +111,7 @@ public class HES_Planar extends HES_Subdividor {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Subdividor#subdivide(wblut.hemesh.HE_Mesh)
 	 */
 	@Override
@@ -125,7 +124,8 @@ public class HES_Planar extends HES_Subdividor {
 			if (!random) {
 				final HE_Vertex fv = new HE_Vertex(face.getFaceCenter());
 				faceVertices.put(face.key(), fv);
-			} else {
+			}
+			else {
 				HE_Halfedge he = face.getHalfedge();
 				HE_Vertex fv = new HE_Vertex();
 				int trial = 0;
@@ -137,13 +137,13 @@ public class HES_Planar extends HES_Subdividor {
 						final double t = 0.5 + (randomGen.nextDouble() - 0.5)
 								* range;
 						tmp._mulSelf(t);
-						fv.pos._addSelf(tmp);
+						fv.getPoint()._addSelf(tmp);
 						c += t;
 						he = he.getNextInFace();
 					} while (he != face.getHalfedge());
-					fv.pos._divSelf(c);
+					fv.getPoint()._divSelf(c);
 					trial++;
-				} while ((!HE_Mesh.pointIsStrictlyInFace(fv.pos, face))
+				} while ((!HE_Mesh.pointIsStrictlyInFace(fv, face))
 						&& (trial < 10));
 				if (trial == 10) {
 					fv._set(face.getFaceCenter());
@@ -161,7 +161,8 @@ public class HES_Planar extends HES_Subdividor {
 			if (random) {
 				final double f = 0.5 + (randomGen.nextDouble() - 0.5) * range;
 				mesh.splitEdge(origE[i], f);
-			} else {
+			}
+			else {
 				mesh.splitEdge(origE[i]);
 			}
 		}
@@ -182,11 +183,13 @@ public class HES_Planar extends HES_Subdividor {
 				final HE_Face centerFace = new HE_Face();
 				newFaces.add(centerFace);
 				centerFace.setLabel(face.getLabel());
+				centerFace.setColor(face.getColor());
 				final ArrayList<HE_Halfedge> faceHalfedges = new ArrayList<HE_Halfedge>();
 				do {
 					final HE_Face newFace = new HE_Face();
 					newFaces.add(newFace);
 					newFace.setLabel(face.getLabel());
+					newFace.setColor(face.getColor());
 					newFace.setHalfedge(origHE1);
 					final HE_Halfedge origHE2 = origHE1.getNextInFace();
 					final HE_Halfedge origHE3 = origHE2.getNextInFace();
@@ -203,6 +206,7 @@ public class HES_Planar extends HES_Subdividor {
 					origHE2.setFace(newFace);
 					newHEp.setVertex(origHE1.getVertex());
 					newHE.setPair(newHEp);
+					newHEp.setPair(newHE);
 					final HE_Edge e = new HE_Edge();
 					mesh.add(e);
 					e.setHalfedge(newHE);
@@ -213,12 +217,14 @@ public class HES_Planar extends HES_Subdividor {
 					origHE1 = origHE3;
 				} while (origHE1 != startHE);
 				HE_Mesh.cycleHalfedges(faceHalfedges);
-			} else {
+			}
+			else {
 				HE_Halfedge origHE1 = startHE;
 				do {
 					final HE_Face newFace = new HE_Face();
 					newFaces.add(newFace);
 					newFace.setLabel(face.getLabel());
+					newFace.setColor(face.getColor());
 					newFace.setHalfedge(origHE1);
 					final HE_Halfedge origHE2 = origHE1.getNextInFace();
 					final HE_Halfedge origHE3 = origHE2.getNextInFace();
@@ -249,14 +255,14 @@ public class HES_Planar extends HES_Subdividor {
 			face.setLabel(0);
 
 		}// end of face loop
-		mesh.pairHalfedges();
+		mesh.pairHalfedgesAndCreateEdges();
 		mesh.replaceFaces(newFaces);
 		return mesh;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * wblut.hemesh.subdividors.HEB_Subdividor#subdivideSelected(wblut.hemesh
 	 * .HE_Mesh, wblut.hemesh.HE_Selection)
@@ -276,7 +282,8 @@ public class HES_Planar extends HES_Subdividor {
 			if (!random) {
 				final HE_Vertex fv = new HE_Vertex(face.getFaceCenter());
 				faceVertices.put(face.key(), fv);
-			} else {
+			}
+			else {
 				HE_Halfedge he = face.getHalfedge();
 				HE_Vertex fv = new HE_Vertex();
 				int trial = 0;
@@ -288,13 +295,13 @@ public class HES_Planar extends HES_Subdividor {
 						final double t = 0.5 + (randomGen.nextDouble() - 0.5)
 								* range;
 						tmp._mulSelf(t);
-						fv.pos._addSelf(tmp);
+						fv.getPoint()._addSelf(tmp);
 						c += t;
 						he = he.getNextInFace();
 					} while (he != face.getHalfedge());
-					fv.pos._divSelf(c);
+					fv.getPoint()._divSelf(c);
 					trial++;
-				} while ((!HE_Mesh.pointIsStrictlyInFace(fv.pos, face))
+				} while ((!HE_Mesh.pointIsStrictlyInFace(fv, face))
 						&& (trial < 10));
 				if (trial == 10) {
 					fv._set(face.getFaceCenter());
@@ -303,7 +310,7 @@ public class HES_Planar extends HES_Subdividor {
 			}
 		}
 
-		selection.collectEdges();
+		selection.collectEdgesByFace();
 
 		final HE_Selection newVertices = new HE_Selection(selection.parent);
 		final HE_Edge[] edges = selection.getEdgesAsArray();
@@ -313,7 +320,8 @@ public class HES_Planar extends HES_Subdividor {
 			if (random) {
 				final double f = 0.5 + (randomGen.nextDouble() - 0.5) * range;
 				v = selection.parent.splitEdge(edges[i], f).vItr().next();
-			} else {
+			}
+			else {
 				v = selection.parent.splitEdge(edges[i]).vItr().next();
 			}
 
@@ -335,12 +343,14 @@ public class HES_Planar extends HES_Subdividor {
 				HE_Halfedge origHE1 = startHE;
 				final HE_Face centerFace = new HE_Face();
 				centerFace.setLabel(face.getLabel());
+				centerFace.setColor(face.getColor());
 				newFaces.add(centerFace);
 				final ArrayList<HE_Halfedge> faceHalfedges = new ArrayList<HE_Halfedge>();
 				do {
 					final HE_Face newFace = new HE_Face();
 					newFaces.add(newFace);
 					newFace.setLabel(face.getLabel());
+					newFace.setColor(face.getColor());
 					newFace.setHalfedge(origHE1);
 					final HE_Halfedge origHE2 = origHE1.getNextInFace();
 					final HE_Halfedge origHE3 = origHE2.getNextInFace();
@@ -357,6 +367,7 @@ public class HES_Planar extends HES_Subdividor {
 					origHE2.setFace(newFace);
 					newHEp.setVertex(origHE1.getVertex());
 					newHE.setPair(newHEp);
+					newHEp.setPair(newHE);
 					final HE_Edge e = new HE_Edge();
 					selection.parent.add(e);
 					e.setHalfedge(newHE);
@@ -367,12 +378,14 @@ public class HES_Planar extends HES_Subdividor {
 					origHE1 = origHE3;
 				} while (origHE1 != startHE);
 				HE_Mesh.cycleHalfedges(faceHalfedges);
-			} else {
+			}
+			else {
 				HE_Halfedge origHE1 = startHE;
 				do {
 					final HE_Face newFace = new HE_Face();
 					newFaces.add(newFace);
 					newFace.setLabel(face.getLabel());
+					newFace.setColor(face.getColor());
 					newFace.setHalfedge(origHE1);
 					final HE_Halfedge origHE2 = origHE1.getNextInFace();
 					final HE_Halfedge origHE3 = origHE2.getNextInFace();
@@ -402,7 +415,7 @@ public class HES_Planar extends HES_Subdividor {
 			}
 
 		}// end of face loop
-		selection.parent.pairHalfedges();
+		selection.parent.pairHalfedgesAndCreateEdges();
 
 		selection.parent.removeFaces(selection.getFacesAsArray());
 

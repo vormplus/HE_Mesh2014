@@ -4,29 +4,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import javolution.util.FastList;
+import javolution.util.FastTable;
 
 public class WB_Polygon extends WB_Ring {
 
 	int[][] triangles;
-
 	int numberOfHoles;
 	int[] nph;
 
 	public static final WB_GeometryFactory geometryfactory = WB_GeometryFactory
 			.instance();
-
-	@Override
-	public WB_Segment getSegment(int i) {
-		while (i < 0) {
-			i += n;
-		}
-		while (i >= n) {
-			i -= n;
-		}
-		return geometryfactory
-				.createSegment(getPoint(i), getPoint((i + 1) % n));
-	}
 
 	protected WB_Polygon(final Collection<? extends WB_Coordinate> points) {
 		n = points.size();
@@ -200,35 +187,43 @@ public class WB_Polygon extends WB_Ring {
 		return nph;
 	}
 
+	public WB_Triangulation2DWithPoints triangulate() {
+
+		final List<WB_IndexedPoint> pts = new FastTable<WB_IndexedPoint>();
+		for (int i = 0; i < n; i++) {
+			pts.add(points.getPoint(i));
+		}
+		int index = n;
+		@SuppressWarnings("unchecked")
+		final List<WB_IndexedPoint>[] hpts = new FastTable[numberOfHoles];
+		for (int i = 0; i < numberOfHoles; i++) {
+			hpts[i] = new FastTable<WB_IndexedPoint>();
+			for (int j = 0; j < nph[i]; j++) {
+				hpts[i].add(points.getPoint(index++));
+			}
+		}
+		triangles = null;
+		return WB_Triangulate.getPolygonTriangulation2D(pts, hpts, true,
+				geometryfactory.createEmbeddedPlane(getPlane(0)));
+
+	}
+
 	public int[][] getTriangles() {
 		if (triangles == null) {
-
-			final WB_KDTree<WB_Point, Integer> pointmap = new WB_KDTree<WB_Point, Integer>(
+			WB_Triangulation2DWithPoints triangulation = triangulate();
+			final WB_KDTree<WB_IndexedPoint, Integer> pointmap = new WB_KDTree<WB_IndexedPoint, Integer>(
 					points.size());
-			final List<WB_Point> pts = new FastList<WB_Point>(n);
-			int index = 0;
-			for (int i = 0; i < n; i++) {
-				pointmap.add(points.getCoordinate(index), index);
-				pts.add(points.getCoordinate(index++));
-			}
-			final List[] hpts = new FastList[numberOfHoles];
-			for (int i = 0; i < numberOfHoles; i++) {
-				hpts[i] = new FastList<WB_Point>(nph[i]);
-				for (int j = 0; j < nph[i]; j++) {
-					pointmap.add(points.getCoordinate(index), index);
-					hpts[i].add(points.getCoordinate(index++));
-				}
+
+			for (int i = 0; i < points.size(); i++) {
+				pointmap.add(points.getPoint(i), i);
 			}
 
-			final WB_Triangulation2DWithPoints triangulation = WB_Triangulate
-					.getPolygonTriangulation2D(pts, hpts, true,
-							geometryfactory.createEmbeddedPlane(getPlane(0)));
 			triangles = triangulation.getTriangles();
 
-			final List<WB_Point> tripoints = triangulation.getPoints();
+			final List<WB_Coordinate> tripoints = triangulation.getPoints();
 			final int[] intmap = new int[tripoints.size()];
-			index = 0;
-			for (final WB_Point point : tripoints) {
+			int index = 0;
+			for (final WB_Coordinate point : tripoints) {
 				final int found = pointmap.getNearestNeighbor(point).value;
 				intmap[index++] = found;
 			}
@@ -258,7 +253,7 @@ public class WB_Polygon extends WB_Ring {
 		}
 		normal._normalizeSelf();
 		return geometryfactory.createPlane(
-				points.getCoordinate(0).addMul(d, normal), normal);
+				points.getPoint(0).addMul(d, normal), normal);
 
 	}
 
@@ -279,6 +274,21 @@ public class WB_Polygon extends WB_Ring {
 
 		return normal;
 
+	}
+
+	public WB_IndexedPoint getPoint(final int i) {
+
+		return points.getPoint(i);
+	}
+
+	public double getd(final int i, final int j) {
+
+		return points.get(i, j);
+	}
+
+	public float getf(final int i, final int j) {
+
+		return (float) points.get(i, j);
 	}
 
 }

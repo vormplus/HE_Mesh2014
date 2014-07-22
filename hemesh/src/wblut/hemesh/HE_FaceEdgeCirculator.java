@@ -15,8 +15,10 @@ public class HE_FaceEdgeCirculator implements Iterator<HE_Edge> {
 
 	@Override
 	public boolean hasNext() {
-
-		return (_current == null) || (_current.getNextInFace() != _start);
+		if (_start == null)
+			return false;
+		return ((_current == null) || (_current.getNextInFace() != _start))
+				&& (_start != null);
 	}
 
 	@Override

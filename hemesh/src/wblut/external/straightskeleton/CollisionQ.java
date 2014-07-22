@@ -29,13 +29,6 @@ public class CollisionQ {
 
 	Skeleton skel;
 
-	/**
-	 * @param corners
-	 *            the input set of corners
-	 * @param liveEdges
-	 *            the (continuously updated) set of edges that still feature in
-	 *            the live corner list. Caller has to update this set :)
-	 */
 	public CollisionQ(Skeleton skel) {
 		this.skel = skel;
 		faceEvents = new PriorityQueue<EdgeCollision>(Math.max(3,
@@ -84,7 +77,7 @@ public class CollisionQ {
 		HeightEvent next = nextEvent();
 
 		if (next instanceof EdgeCollision) {
-			List<EdgeCollision> coHeighted = new ArrayList();
+			List<EdgeCollision> coHeighted = new ArrayList<EdgeCollision>();
 			EdgeCollision ec = (EdgeCollision) next;
 			coHeighted.add(ec);
 
@@ -226,7 +219,7 @@ public class CollisionQ {
 	}
 
 	boolean holdRemoves = false;
-	List<Corner> removes = new ArrayList();
+	List<Corner> removes = new ArrayList<Corner>();
 
 	public void holdRemoves() {
 		removes.clear();

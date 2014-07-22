@@ -7,7 +7,7 @@ public class HES_PlanarMidEdge extends HES_Subdividor {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Subdividor#subdivide(wblut.hemesh.HE_Mesh)
 	 */
 	@Override
@@ -44,6 +44,7 @@ public class HES_PlanarMidEdge extends HES_Subdividor {
 				origHE2.setFace(newFace);
 				newHEp.setVertex(origHE1.getVertex());
 				newHE.setPair(newHEp);
+				newHEp.setPair(newHE);
 				final HE_Edge e = new HE_Edge();
 				mesh.add(e);
 				e.setHalfedge(newHE);
@@ -56,7 +57,7 @@ public class HES_PlanarMidEdge extends HES_Subdividor {
 			HE_Mesh.cycleHalfedges(faceHalfedges);
 		}
 
-		mesh.pairHalfedges();
+		mesh.pairHalfedgesAndCreateEdges();
 		mesh.replaceFaces(newFaces);
 
 		return mesh;
@@ -64,7 +65,7 @@ public class HES_PlanarMidEdge extends HES_Subdividor {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * wblut.hemesh.subdividors.HEB_Subdividor#subdivideSelected(wblut.hemesh
 	 * .HE_Mesh, wblut.hemesh.HE_Selection)
@@ -104,6 +105,7 @@ public class HES_PlanarMidEdge extends HES_Subdividor {
 				origHE2.setFace(newFace);
 				newHEp.setVertex(origHE1.getVertex());
 				newHE.setPair(newHEp);
+				newHEp.setPair(newHE);
 				final HE_Edge e = new HE_Edge();
 				selection.parent.add(e);
 				e.setHalfedge(newHE);
@@ -116,7 +118,7 @@ public class HES_PlanarMidEdge extends HES_Subdividor {
 			HE_Mesh.cycleHalfedges(faceHalfedges);
 		}
 
-		selection.parent.pairHalfedges();
+		selection.parent.pairHalfedgesAndCreateEdges();
 		selection.parent.removeFaces(selection.getFacesAsArray());
 		selection.parent.addFaces(newFaces);
 

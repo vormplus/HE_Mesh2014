@@ -4,16 +4,17 @@ import java.util.Iterator;
 
 import processing.core.PApplet;
 import processing.opengl.PGraphics3D;
-import wblut.WB_Epsilon;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_Vector;
+import wblut.math.WB_Epsilon;
+import wblut.math.WB_Math;
 
 /**
  * Abstract base class for mesh creation. Implementation should return a valid
  * HE_Mesh.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 public abstract class HEC_Creator {
 
@@ -43,14 +44,14 @@ public abstract class HEC_Creator {
 	 */
 	public HEC_Creator() {
 		center = new WB_Point();
-		zaxis = WB_Vector.Z();
-		Z = WB_Vector.Z();
+		zaxis = new WB_Vector(WB_Vector.Z());
+		Z = new WB_Vector(WB_Vector.Z());
 		toModelview = false;
 	}
 
 	/**
 	 * Set center of mesh.
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of center
 	 * @param y
@@ -66,7 +67,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Set center of mesh.
-	 * 
+	 *
 	 * @param c
 	 *            center
 	 * @return self
@@ -78,7 +79,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Rotation of mesh about local Z-axis.
-	 * 
+	 *
 	 * @param a
 	 *            angle
 	 * @return self
@@ -90,7 +91,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Orientation of local Z-axis of mesh.
-	 * 
+	 *
 	 * @param x
 	 *            x-coordinate of axis vector
 	 * @param y
@@ -107,7 +108,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Local Z-axis of mesh.
-	 * 
+	 *
 	 * @param p0x
 	 *            x-coordinate of first point on axis
 	 * @param p0y
@@ -132,7 +133,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Orientation of local Z-axis of mesh.
-	 * 
+	 *
 	 * @param p
 	 *            axis vector
 	 * @return self
@@ -145,7 +146,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Local Z-axis of mesh.
-	 * 
+	 *
 	 * @param p0
 	 *            first point on axis
 	 * @param p1
@@ -160,7 +161,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Use the applet's modelview coordinates.
-	 * 
+	 *
 	 * @param home
 	 *            calling applet, typically "this"
 	 * @return self
@@ -173,7 +174,7 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Use absolute coordinates.
-	 * 
+	 *
 	 * @return self
 	 */
 	public HEC_Creator setToWorldview() {
@@ -184,14 +185,14 @@ public abstract class HEC_Creator {
 
 	/**
 	 * Creates the base.
-	 * 
+	 *
 	 * @return HE_Mesh
 	 */
 	protected abstract HE_Mesh createBase();
 
 	/**
 	 * Generate a mesh, move to center and orient along axis.
-	 * 
+	 *
 	 * @return HE_Mesh
 	 */
 	public final HE_Mesh create() {
@@ -199,16 +200,19 @@ public abstract class HEC_Creator {
 		if (!override) {
 
 			if (zangle != 0) {
-				base.rotateAboutAxis(zangle, center.x, center.y, center.z,
-						center.x, center.y, center.z + 1);
+				base.rotateAboutAxis(zangle, center.xd(), center.yd(),
+						center.zd(), center.xd(), center.yd(), center.zd() + 1);
 			}
 
 			final WB_Vector tmp = zaxis.cross(Z);
 			if (!WB_Epsilon.isZeroSq(tmp.getSqLength())) {
-				base.rotateAboutAxis(-Math.acos(zaxis.dot(Z)), center.x,
-						center.y, center.z, center.x + tmp.x, center.y + tmp.y,
-						center.z + tmp.z);
-			} else if (zaxis.dot(Z) < -1 + WB_Epsilon.EPSILON) {
+				base.rotateAboutAxis(
+						-Math.acos(WB_Math.clamp(zaxis.dot(Z), -1, 1)),
+						center.xd(), center.yd(), center.zd(), center.xd()
+								+ tmp.xd(), center.yd() + tmp.yd(), center.zd()
+								+ tmp.zd());
+			}
+			else if (zaxis.dot(Z) < -1 + WB_Epsilon.EPSILON) {
 				base.scale(1, 1, -1);
 			}
 			base.moveTo(center);

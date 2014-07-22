@@ -1,13 +1,11 @@
 package wblut.geom;
 
-import java.util.Map.Entry;
-import java.util.Set;
-
-import javolution.util.FastMap;
+import gnu.trove.map.TIntDoubleMap;
+import gnu.trove.map.hash.TIntDoubleHashMap;
 
 public class WB_HashGrid {
 
-	private final FastMap<Integer, Double> values;
+	private final TIntDoubleMap values;
 
 	private final double defaultValue;
 
@@ -19,8 +17,9 @@ public class WB_HashGrid {
 		this.L = L;
 		this.M = M;
 		KL = K * L;
-		values = new FastMap<Integer, Double>();
 		this.defaultValue = defaultValue;
+		values = new TIntDoubleHashMap(10, 0.5f, -1, defaultValue);
+
 	}
 
 	public WB_HashGrid(final int K, final int L, final int M) {
@@ -28,8 +27,9 @@ public class WB_HashGrid {
 		this.L = L;
 		this.M = M;
 		KL = K * L;
-		values = new FastMap<Integer, Double>();
+
 		defaultValue = -10000000;
+		values = new TIntDoubleHashMap(10, 0.5f, -1, defaultValue);
 	}
 
 	public boolean setValue(final double value, final int i, final int j,
@@ -46,10 +46,11 @@ public class WB_HashGrid {
 			final int k) {
 		final int id = safeIndex(i, j, k);
 		if (id > 0) {
-			final Double v = values.get(id);
-			if (v == null) {
+			final double v = values.get(id);
+			if (v == defaultValue) {
 				values.put(id, value);
-			} else {
+			}
+			else {
 				values.put(id, v + value);
 			}
 			return true;
@@ -73,9 +74,8 @@ public class WB_HashGrid {
 		}
 		if (id > 0) {
 			final Double val = values.get(id);
-			if (val != null) {
-				return val.doubleValue();
-			}
+
+			return val.doubleValue();
 
 		}
 		return defaultValue;
@@ -122,8 +122,13 @@ public class WB_HashGrid {
 		return defaultValue;
 	}
 
-	public Set<Entry<Integer, Double>> getValues() {
-		return values.entrySet();
+	public int[] getKeys() {
+		return values.keys();
+	}
+
+	public int size() {
+		return values.size();
+
 	}
 
 }

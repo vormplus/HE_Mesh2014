@@ -13,19 +13,17 @@
  */
 package wblut.hemesh;
 
-import java.util.Map.Entry;
-
 import javolution.util.FastMap;
-import wblut.WB_Epsilon;
 import wblut.geom.WB_HashGrid;
 import wblut.geom.WB_Point;
+import wblut.math.WB_Epsilon;
 
 // TODO: Auto-generated Javadoc
 /**
  * The Class HEC_IsoGrid.
- * 
+ *
  * @author Frederik Vanhoutte, W:Blut
- * 
+ *
  *         Straightforward marching cube implementation:
  *         http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
  */
@@ -360,7 +358,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Instantiates a new HEC_IsoGrid.
-	 * 
+	 *
 	 */
 	public HEC_IsoGrid() {
 		super();
@@ -371,7 +369,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Size of cell.
-	 * 
+	 *
 	 * @param dx
 	 *            the dx
 	 * @param dy
@@ -389,7 +387,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Values at grid points.
-	 * 
+	 *
 	 * @param values
 	 *            WB_HashGrid
 	 * @return self
@@ -405,7 +403,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Isolevel.
-	 * 
+	 *
 	 * @param v
 	 *            isolevel
 	 * @return self
@@ -417,7 +415,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Invert isosurface.
-	 * 
+	 *
 	 * @param invert
 	 *            true/false
 	 * @return self
@@ -429,21 +427,21 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Sets the grid center.
-	 * 
+	 *
 	 * @param c
 	 *            the c
 	 * @return the hE c_ iso grid
 	 */
 	public HEC_IsoGrid setGridCenter(final WB_Point c) {
-		cx = c.x;
-		cy = c.y;
-		cz = c.z;
+		cx = c.xd();
+		cy = c.yd();
+		cz = c.zd();
 		return this;
 	}
 
 	/**
 	 * Sets the grid center.
-	 * 
+	 *
 	 * @param x
 	 *            the x
 	 * @param y
@@ -462,7 +460,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Index.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -478,7 +476,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Value.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -502,7 +500,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Xedge.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -523,7 +521,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 		final double val0 = value(i, j, k);
 		final double val1 = value(i + 1, j, k);
 		xedge = new HE_Vertex(interp(isolevel, p0, p1, val0, val1));
-		xedge.pos._addSelf(offset);
+		xedge.getPoint()._addSelf(offset);
 		mesh.add(xedge);
 		xedges.put(index(i, j, k), xedge);
 		return xedge;
@@ -531,7 +529,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Yedge.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -552,7 +550,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 		final double val0 = value(i, j, k);
 		final double val1 = value(i, j + 1, k);
 		yedge = new HE_Vertex(interp(isolevel, p0, p1, val0, val1));
-		yedge.pos._addSelf(offset);
+		yedge.getPoint()._addSelf(offset);
 		mesh.add(yedge);
 		yedges.put(index(i, j, k), yedge);
 		return yedge;
@@ -560,7 +558,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 
 	/**
 	 * Zedge.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -582,7 +580,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 		final double val0 = value(i, j, k);
 		final double val1 = value(i, j, k + 1);
 		zedge = new HE_Vertex(interp(isolevel, p0, p1, val0, val1));
-		zedge.pos._addSelf(offset);
+		zedge.getPoint()._addSelf(offset);
 		mesh.add(zedge);
 		zedges.put(index(i, j, k), zedge);
 		return zedge;
@@ -595,7 +593,7 @@ public class HEC_IsoGrid extends HEC_Creator {
 	 */
 	/**
 	 * Interp.
-	 * 
+	 *
 	 * @param isolevel
 	 *            the isolevel
 	 * @param p1
@@ -624,13 +622,13 @@ public class HEC_IsoGrid extends HEC_Creator {
 		}
 		mu = (isolevel - valp1) / (valp2 - valp1);
 
-		return new HE_Vertex(p1.x + mu * (p2.x - p1.x), p1.y + mu
-				* (p2.y - p1.y), p1.z + mu * (p2.z - p1.z));
+		return new HE_Vertex(p1.xd() + mu * (p2.xd() - p1.xd()), p1.yd() + mu
+				* (p2.yd() - p1.yd()), p1.zd() + mu * (p2.zd() - p1.zd()));
 	}
 
 	/**
 	 * Classify cell.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -672,7 +670,8 @@ public class HEC_IsoGrid extends HEC_Creator {
 			if (value(i, j + 1, k + 1) > isolevel) {
 				cubeindex |= 128;
 			}
-		} else {
+		}
+		else {
 			if (value(i, j, k) < isolevel) {
 				cubeindex |= 1;
 			}
@@ -712,12 +711,14 @@ public class HEC_IsoGrid extends HEC_Creator {
 		zedges = new FastMap<Integer, HE_Vertex>();
 		int c = 0;
 		int i, j, k, id, cc;
-		for (final Entry<Integer, Double> entry : values.getValues()) {
-			id = entry.getKey();
-			if ((c % 500) == 0) {
-				System.out.println("HEC_IsoSurface: Creating cell " + (c + 1)
-						+ " out of " + values.getValues().size() + ".");
-			}
+		final int[] keys = values.getKeys();
+		for (int key = 0; key < keys.length; key++) {
+			id = keys[key];
+			/*
+			 * ((c % 500) == 0) {
+			 * System.out.println("HEC_IsoSurface: Creating cell " + (c + 1) +
+			 * " out of " + values + "."); }
+			 */
 			k = id / (values.getW() * values.getH());
 			i = id - k * (values.getW() * values.getH());
 			j = i / values.getW();
@@ -728,12 +729,12 @@ public class HEC_IsoGrid extends HEC_Creator {
 			}
 			c++;
 		}
-		mesh.pairHalfedges();
+		mesh.pairHalfedgesAndCreateEdges();
 	}
 
 	/**
 	 * Gets the polygons.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -825,7 +826,6 @@ public class HEC_IsoGrid extends HEC_Creator {
 	protected HE_Mesh createBase() {
 		mesh = new HE_Mesh();
 		polygonise();
-		// mesh.resolvePinchPoints();
 		return mesh;
 
 	}

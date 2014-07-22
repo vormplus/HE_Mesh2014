@@ -1,10 +1,10 @@
 package wblut.hemesh;
 
-import wblut.geom.SimplePolygon;
+import wblut.geom.WB_Coordinate;
 import wblut.geom.WB_Line;
 import wblut.geom.WB_Point;
-import wblut.geom.WB_SimplePolygon2D;
 import wblut.geom.WB_Vector;
+import wblut.geom.interfaces.SimplePolygon;
 
 public class HEC_RevolvePolygon extends HEC_Creator {
 
@@ -20,17 +20,13 @@ public class HEC_RevolvePolygon extends HEC_Creator {
 		facets = 6;
 	}
 
-	public HEC_RevolvePolygon setPolygon(final WB_SimplePolygon2D poly) {
-		polygon = poly.toPolygon();
-		return this;
-	}
-
 	public HEC_RevolvePolygon setPolygon(final SimplePolygon poly) {
 		polygon = poly;
 		return this;
 	}
 
-	public HEC_RevolvePolygon setAxis(final WB_Point p, final WB_Vector v) {
+	public HEC_RevolvePolygon setAxis(final WB_Coordinate p,
+			final WB_Coordinate v) {
 		axis = new WB_Line(p, v);
 		return this;
 	}
@@ -56,7 +52,7 @@ public class HEC_RevolvePolygon extends HEC_Creator {
 		if ((polygon == null) || (axis == null)) {
 			return null;
 		}
-		final WB_Vector norm = polygon.getPlane().getNormal();
+
 		final int n = polygon.getN();
 
 		final WB_Point[] points = new WB_Point[n * facets];

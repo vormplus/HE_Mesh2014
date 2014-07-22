@@ -3,13 +3,13 @@ package wblut.hemesh;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import wblut.WB_Epsilon;
 import wblut.geom.WB_AABB;
 import wblut.geom.WB_AABBTree;
-import wblut.geom.WB_Distance3D;
+import wblut.geom.WB_Distance;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_Ray;
 import wblut.geom.WB_Vector;
+import wblut.math.WB_Epsilon;
 
 public class HEC_ShrinkWrap extends HEC_Creator {
 
@@ -59,7 +59,7 @@ public class HEC_ShrinkWrap extends HEC_Creator {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Creator#create()
 	 */
 	@Override
@@ -73,10 +73,10 @@ public class HEC_ShrinkWrap extends HEC_Creator {
 			wcenter = aabb.getCenter();
 		}
 
-		final double radius = WB_Distance3D.distance(center, aabb.getMax())
+		final double radius = WB_Distance.getDistance3D(center, aabb.getMax())
 				+ WB_Epsilon.EPSILON;
-		final HE_Mesh sphere = new HE_Mesh(new HEC_Geodesic().setLevel(level)
-				.setRadius(radius).setCenter(wcenter));
+		final HE_Mesh sphere = new HE_Mesh(new HEC_Geodesic().setB(level)
+				.setC(0).setRadius(radius).setCenter(wcenter));
 
 		result = sphere.get();
 		final Iterator<HE_Vertex> vItr = sphere.vItr();
@@ -91,15 +91,17 @@ public class HEC_ShrinkWrap extends HEC_Creator {
 			v = vItr.next();
 			vmod = vmodItr.next();
 			R = new WB_Ray(v, v.getVertexNormal()._mulSelf(-1));
-			final WB_Point p = HE_Intersection.getClosestIntersection(tree, R);
+			final WB_Point p = HE_Intersection.getClosestIntersection(tree, R).point;
 			if (p != null) {
-				if (WB_Distance3D.distance(v, p) < radius) {
+				if (WB_Distance.getDistance3D(v, p) < radius) {
 					vmod._set(p);
-				} else {
+				}
+				else {
 					undecided.add(vmod);
 				}
 
-			} else {
+			}
+			else {
 				undecided.add(vmod);
 			}
 
@@ -115,15 +117,16 @@ public class HEC_ShrinkWrap extends HEC_Creator {
 				for (final HE_Vertex n : v.getNeighborVertices()) {
 					if (!undecided.contains(n)) {
 						lost = false;
-						dist += WB_Distance3D.distance(wcenter, n);
+						dist += WB_Distance.getDistance3D(wcenter, n);
 						decNeighbors++;
 					}
 				}
 				if (lost) {
 					newundecided.add(v);
-				} else {
+				}
+				else {
 					dist /= decNeighbors;
-					final WB_Vector dv = v.pos.subToVector(wcenter);
+					final WB_Vector dv = v.getPoint().subToVector(wcenter);
 					dv._normalizeSelf();
 					v._set(wcenter.addMul(dist, dv));
 				}

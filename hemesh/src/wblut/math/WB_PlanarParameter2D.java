@@ -1,5 +1,6 @@
 package wblut.math;
 
+
 /**
  * Parameter class dependent on two variables. An implementation of the
  * WB_Function2D instance is passed upon instantiation.

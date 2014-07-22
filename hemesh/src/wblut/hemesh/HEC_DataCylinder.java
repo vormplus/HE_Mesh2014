@@ -3,9 +3,9 @@ package wblut.hemesh;
 import java.util.Iterator;
 import java.util.List;
 
-import wblut.WB_Epsilon;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_Vector;
+import wblut.math.WB_Epsilon;
 
 public class HEC_DataCylinder extends HEC_Creator {
 
@@ -42,7 +42,7 @@ public class HEC_DataCylinder extends HEC_Creator {
 		H = 0;
 		_facets = 6;
 		_steps = 1;
-		Z = WB_Vector.Y();
+		Z = new WB_Vector(WB_Vector.Y());
 		topcap = true;
 		bottomcap = true;
 		taper = 1.0;
@@ -338,7 +338,7 @@ public class HEC_DataCylinder extends HEC_Creator {
 					final int currentfacet = j * reduceFacets;
 					final double datapoint = data[currentfacet][currentstep];
 					final WB_Point p = currentFace.getFaceCenter();
-					p._addSelf(datapoint, currentFace.getFaceNormal());
+					p._addMulSelf(datapoint, currentFace.getFaceNormal());
 					mesh.triSplitFace(currentFace, p);
 				}
 			}

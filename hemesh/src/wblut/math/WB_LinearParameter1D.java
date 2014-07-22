@@ -3,6 +3,7 @@
  */
 package wblut.math;
 
+
 /**
  * Parameter class dependent on a single variable. An implementation of the
  * WB_Function1D instance is passed upon instantiation.

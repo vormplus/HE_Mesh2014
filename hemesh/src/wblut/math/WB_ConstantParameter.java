@@ -1,5 +1,6 @@
 package wblut.math;
 
+
 /**
  * The Class WB_ConstantParameter.
  * 

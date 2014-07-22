@@ -2,16 +2,20 @@ package wblut.hemesh;
 
 import java.util.Iterator;
 
+import wblut.geom.WB_GeometryFactory;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_Sphere;
 
 public class HEM_Spherify extends HEM_Modifier {
 
 	private final WB_Sphere sphere;
+	private double factor;
+	private final WB_GeometryFactory gf = WB_GeometryFactory.instance();
 
 	public HEM_Spherify() {
 		super();
 		sphere = new WB_Sphere();
+		factor = 1.0;
 	}
 
 	public HEM_Spherify setRadius(final double r) {
@@ -29,9 +33,15 @@ public class HEM_Spherify extends HEM_Modifier {
 		return this;
 	}
 
+	public HEM_Spherify setFactor(final double f) {
+		factor = f;
+		return this;
+
+	}
+
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.modifiers.HEM_Modifier#apply(wblut.hemesh.core.HE_Mesh)
 	 */
 	@Override
@@ -40,14 +50,15 @@ public class HEM_Spherify extends HEM_Modifier {
 		HE_Vertex v;
 		while (vItr.hasNext()) {
 			v = vItr.next();
-			v.pos._set(sphere.projectToSphere(v));
+			v._set(gf.createInterpolatedPoint(v, sphere.projectToSphere(v),
+					factor));
 		}
 		return mesh;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @seewblut.hemesh.modifiers.HEM_Modifier#applySelected(wblut.hemesh.core.
 	 * HE_Selection)
 	 */
@@ -57,7 +68,8 @@ public class HEM_Spherify extends HEM_Modifier {
 		HE_Vertex v;
 		while (vItr.hasNext()) {
 			v = vItr.next();
-			v.pos._set(sphere.projectToSphere(v));
+			v._set(gf.createInterpolatedPoint(v, sphere.projectToSphere(v),
+					factor));
 		}
 		return selection.parent;
 	}

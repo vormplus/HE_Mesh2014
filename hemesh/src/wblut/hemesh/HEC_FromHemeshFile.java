@@ -27,7 +27,7 @@ public class HEC_FromHemeshFile extends HEC_Creator {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Creator#create()
 	 */
 	@Override
@@ -54,10 +54,12 @@ public class HEC_FromHemeshFile extends HEC_Creator {
 					contents.append(line);
 					contents.append(System.getProperty("line.separator"));
 				}
-			} finally {
+			}
+			finally {
 				input.close();
 			}
-		} catch (final IOException ex) {
+		}
+		catch (final IOException ex) {
 			ex.printStackTrace();
 		}
 
@@ -72,22 +74,20 @@ public class HEC_FromHemeshFile extends HEC_Creator {
 		final int numEdges = Integer.parseInt(subresult[2]);
 		final int numFaces = Integer.parseInt(subresult[3]);
 		final HE_Mesh mesh = new HE_Mesh();
-		final FastTable<HE_Vertex> vertices = new FastTable<HE_Vertex>(
-				numVertices);
+		final FastTable<HE_Vertex> vertices = new FastTable<HE_Vertex>();
 		for (int i = 0; i < numVertices; i++) {
 			vertices.add(new HE_Vertex());
 		}
 
-		final FastTable<HE_Halfedge> halfedges = new FastTable<HE_Halfedge>(
-				numHalfedges);
+		final FastTable<HE_Halfedge> halfedges = new FastTable<HE_Halfedge>();
 		for (int i = 0; i < numHalfedges; i++) {
 			halfedges.add(new HE_Halfedge());
 		}
-		final FastTable<HE_Edge> edges = new FastTable<HE_Edge>(numEdges);
+		final FastTable<HE_Edge> edges = new FastTable<HE_Edge>();
 		for (int i = 0; i < numEdges; i++) {
 			edges.add(new HE_Edge());
 		}
-		final FastTable<HE_Face> faces = new FastTable<HE_Face>(numFaces);
+		final FastTable<HE_Face> faces = new FastTable<HE_Face>();
 		for (int i = 0; i < numFaces; i++) {
 			faces.add(new HE_Face());
 		}
@@ -125,6 +125,7 @@ public class HEC_FromHemeshFile extends HEC_Creator {
 			}
 			if (hepairid > -1) {
 				he.setPair(halfedges.get(hepairid));
+				halfedges.get(hepairid).setPair(he);
 			}
 			if (eid > -1) {
 				he.setEdge(edges.get(eid));

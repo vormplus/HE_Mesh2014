@@ -5,13 +5,13 @@ import java.util.Iterator;
 import wblut.geom.WB_Vector;
 import wblut.math.WB_ConstantParameter;
 import wblut.math.WB_Parameter;
-import wblut.math.WB_RandomSphere;
+import wblut.math.WB_RandomOnSphere;
 
 /**
  * Expands or contracts all vertices along the vertex normals.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 
 public class HEM_Noise extends HEM_Modifier {
@@ -30,19 +30,19 @@ public class HEM_Noise extends HEM_Modifier {
 
 	/**
 	 * Set distance to move vertices.
-	 * 
+	 *
 	 * @param d
 	 *            distance
 	 * @return this
 	 */
 	public HEM_Noise setDistance(final double d) {
-		this.d = new WB_ConstantParameter(d);
+		this.d = new WB_ConstantParameter<Double>(d);
 		return this;
 	}
 
 	/**
 	 * Sets the distance.
-	 * 
+	 *
 	 * @param d
 	 *            the d
 	 * @return the hE m_ noise
@@ -54,7 +54,7 @@ public class HEM_Noise extends HEM_Modifier {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Modifier#apply(wblut.hemesh.HE_Mesh)
 	 */
 	@Override
@@ -65,19 +65,20 @@ public class HEM_Noise extends HEM_Modifier {
 		HE_Vertex v;
 		final Iterator<HE_Vertex> vItr = mesh.vItr();
 
-		final WB_RandomSphere rs = new WB_RandomSphere();
+		final WB_RandomOnSphere rs = new WB_RandomOnSphere();
 		WB_Vector n;
 		while (vItr.hasNext()) {
 			v = vItr.next();
 			n = rs.nextVector();
-			v.pos._addSelf(n._mulSelf(d.value(v.xd(), v.yd(), v.zd())));
+			v.getPoint()._addSelf(n._mulSelf(d.value(v.xd(), v.yd(), v.zd())));
 		}
+		mesh.resetFaces();
 		return mesh;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Modifier#apply(wblut.hemesh.HE_Mesh)
 	 */
 	@Override
@@ -88,14 +89,14 @@ public class HEM_Noise extends HEM_Modifier {
 
 		HE_Vertex v;
 
-		final WB_RandomSphere rs = new WB_RandomSphere();
+		final WB_RandomOnSphere rs = new WB_RandomOnSphere();
 		WB_Vector n;
 		while (vItr.hasNext()) {
 			v = vItr.next();
 			n = rs.nextVector();
-			v.pos._addSelf(n._mulSelf(d.value(v.xd(), v.yd(), v.zd())));
+			v.getPoint()._addSelf(n._mulSelf(d.value(v.xd(), v.yd(), v.zd())));
 		}
-
+		selection.parent.resetFaces();
 		return selection.parent;
 	}
 }

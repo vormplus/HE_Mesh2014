@@ -1,12 +1,14 @@
 package wblut.hemesh;
 
+import gnu.trove.map.TLongIntMap;
+import gnu.trove.map.hash.TLongIntHashMap;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javolution.util.FastMap;
-import wblut.WB_Epsilon;
-import wblut.geom.WB_Distance3D;
+import wblut.geom.WB_Distance;
 import wblut.geom.WB_Point;
+import wblut.math.WB_Epsilon;
 
 public class HES_DooSabin extends HES_Subdividor {
 
@@ -67,7 +69,8 @@ public class HES_DooSabin extends HES_Subdividor {
 					"HES_DooSabin only supports closed meshes at this time.");
 		}
 		Iterator<HE_Face> fItr = mesh.fItr();
-		final FastMap<Long, Integer> halfedgeCorrelation = new FastMap<Long, Integer>();
+		final TLongIntMap halfedgeCorrelation = new TLongIntHashMap(10, 0.5f,
+				-1L, -1);
 		final ArrayList<WB_Point> newVertices = new ArrayList<WB_Point>();
 		HE_Face f;
 		HE_Halfedge he;
@@ -93,7 +96,7 @@ public class HES_DooSabin extends HES_Subdividor {
 						.mul(edgeFactor));
 				p._divSelf(div);
 				if (absolute) {
-					final double dcurrent = WB_Distance3D.distance(p,
+					final double dcurrent = WB_Distance.getDistance3D(p,
 							he.getVertex());
 					p._subSelf(he.getVertex());
 					p._mulSelf(d / dcurrent);

@@ -3,7 +3,7 @@ package wblut.external.ProGAL;
 import java.util.Collection;
 import java.util.List;
 
-import wblut.WB_Epsilon;
+import wblut.math.WB_Epsilon;
 
 /**
  * Part of ProGAL: http://www.diku.dk/~rfonseca/ProGAL/
@@ -531,7 +531,6 @@ public class Sphere implements Volume {
 	 * sphere shells. If the three spheres intersect in more than two points or
 	 * one sphere contains another, the result of this method not specified.
 	 * 
-	 * @hops 57-70
 	 */
 	public static Point[] getIntersections(Sphere s1, Sphere s2, Sphere s3) {
 		// See ProGAL/Doc/ThreeSphereIntersection.jpg for derivation of these

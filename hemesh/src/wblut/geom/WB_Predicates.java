@@ -1,29 +1,17 @@
-/**
- * 
- */
 package wblut.geom;
 
 import wblut.math.WB_DoubleDouble;
 
-// TODO: Auto-generated Javadoc
-/**
- * The Class WB_Predicates.
- * 
- * @author Frederik Vanhoutte, W:Blut
- */
 public class WB_Predicates {
 
-	/** The orient error bound. */
 	private static double orientErrorBound = -1;
 
-	/** The insphere error bound. */
 	private static double insphereErrorBound = -1;
 
-	/**
-	 * Find mach epsilon.
-	 * 
-	 * @return the double
-	 */
+	private static double orientErrorBound2D = -1;
+
+	private static double incircleErrorBound2D = -1;
+
 	private static double findMachEpsilon() {
 		double epsilon, check, lastcheck;
 		epsilon = 1.0;
@@ -36,14 +24,13 @@ public class WB_Predicates {
 		return epsilon;
 	}
 
-	/**
-	 * Inits the.
-	 */
 	private static void init() {
 		final double epsilon = findMachEpsilon();
 
 		orientErrorBound = (7.0 + 56.0 * epsilon) * epsilon;
 		insphereErrorBound = (16.0 + 224.0 * epsilon) * epsilon;
+		orientErrorBound2D = (3.0 + 16.0 * epsilon) * epsilon;
+		incircleErrorBound2D = (10.0 + 96.0 * epsilon) * epsilon;
 	}
 
 	// >0 if pd below plane defined by pa,pb,pc
@@ -62,15 +49,18 @@ public class WB_Predicates {
 	 *            the pd
 	 * @return the double
 	 */
-	public static double orient(final WB_Point pa, final WB_Point pb,
-			final WB_Point pc, final WB_Point pd) {
+	public static double orient(final WB_Coordinate pa, final WB_Coordinate pb,
+			final WB_Coordinate pc, final WB_Coordinate pd) {
 		if (orientErrorBound == -1) {
 			init();
 		}
 
-		final double adx = pa.x - pd.x, bdx = pb.x - pd.x, cdx = pc.x - pd.x;
-		final double ady = pa.y - pd.y, bdy = pb.y - pd.y, cdy = pc.y - pd.y;
-		double adz = pa.z - pb.z, bdz = pb.z - pd.x, cdz = pc.z - pd.z;
+		final double adx = pa.xd() - pd.xd(), bdx = pb.xd() - pd.xd(), cdx = pc
+				.xd() - pd.xd();
+		final double ady = pa.yd() - pd.yd(), bdy = pb.yd() - pd.yd(), cdy = pc
+				.yd() - pd.yd();
+		double adz = pa.zd() - pb.zd(), bdz = pb.zd() - pd.xd(), cdz = pc.zd()
+				- pd.zd();
 
 		double adxbdy = adx * bdy;
 		double adybdx = ady * bdx;
@@ -117,10 +107,10 @@ public class WB_Predicates {
 		errbound *= orientErrorBound;
 
 		if (det >= errbound) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 
 		} else if (-det >= errbound) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		} else {
 			return orientExact(pa, pb, pc, pd);
 		}
@@ -140,8 +130,9 @@ public class WB_Predicates {
 	 *            the pd
 	 * @return the double
 	 */
-	public static double orientExact(final WB_Point pa, final WB_Point pb,
-			final WB_Point pc, final WB_Point pd) {
+	public static double orientExact(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd) {
 		WB_DoubleDouble ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz;
 		WB_DoubleDouble adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz;
 		WB_DoubleDouble m1, m2, m3;
@@ -149,18 +140,18 @@ public class WB_Predicates {
 
 		det = WB_DoubleDouble.ZERO;
 
-		ax = new WB_DoubleDouble(pa.x);
-		ay = new WB_DoubleDouble(pa.y);
-		az = new WB_DoubleDouble(pa.z);
-		bx = new WB_DoubleDouble(pb.x);
-		by = new WB_DoubleDouble(pb.y);
-		bz = new WB_DoubleDouble(pb.z);
-		cx = new WB_DoubleDouble(pc.x);
-		cy = new WB_DoubleDouble(pc.y);
-		cz = new WB_DoubleDouble(pc.z);
-		dx = new WB_DoubleDouble(pd.x).negate();
-		dy = new WB_DoubleDouble(pd.y).negate();
-		dz = new WB_DoubleDouble(pd.z).negate();
+		ax = new WB_DoubleDouble(pa.xd());
+		ay = new WB_DoubleDouble(pa.yd());
+		az = new WB_DoubleDouble(pa.zd());
+		bx = new WB_DoubleDouble(pb.xd());
+		by = new WB_DoubleDouble(pb.yd());
+		bz = new WB_DoubleDouble(pb.zd());
+		cx = new WB_DoubleDouble(pc.xd());
+		cy = new WB_DoubleDouble(pc.yd());
+		cz = new WB_DoubleDouble(pc.zd());
+		dx = new WB_DoubleDouble(pd.xd()).negate();
+		dy = new WB_DoubleDouble(pd.yd()).negate();
+		dz = new WB_DoubleDouble(pd.zd()).negate();
 
 		adx = ax.add(dx);
 		bdx = bx.add(dx);
@@ -199,8 +190,9 @@ public class WB_Predicates {
 	 *            the pe
 	 * @return the double
 	 */
-	public static double insphere(final WB_Point pa, final WB_Point pb,
-			final WB_Point pc, final WB_Point pd, final WB_Point pe) {
+	public static double insphere(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd, final WB_Coordinate pe) {
 
 		if (insphereErrorBound == -1) {
 			init();
@@ -220,18 +212,18 @@ public class WB_Predicates {
 		double det;
 		double permanent, errbound;
 
-		aex = pa.x - pe.x;
-		bex = pb.x - pe.x;
-		cex = pc.x - pe.x;
-		dex = pd.x - pe.x;
-		aey = pa.y - pe.y;
-		bey = pb.y - pe.y;
-		cey = pc.y - pe.y;
-		dey = pd.y - pe.y;
-		aez = pa.z - pe.z;
-		bez = pb.z - pe.z;
-		cez = pc.z - pe.z;
-		dez = pd.z - pe.z;
+		aex = pa.xd() - pe.xd();
+		bex = pb.xd() - pe.xd();
+		cex = pc.xd() - pe.xd();
+		dex = pd.xd() - pe.xd();
+		aey = pa.yd() - pe.yd();
+		bey = pb.yd() - pe.yd();
+		cey = pc.yd() - pe.yd();
+		dey = pd.yd() - pe.yd();
+		aez = pa.zd() - pe.zd();
+		bez = pb.zd() - pe.zd();
+		cez = pc.zd() - pe.zd();
+		dez = pd.zd() - pe.zd();
 
 		aexbey = aex * bey;
 		bexaey = bex * aey;
@@ -298,7 +290,7 @@ public class WB_Predicates {
 						* cezplus) * dlift;
 		errbound = insphereErrorBound * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return insphereExact(pa, pb, pc, pd, pe);
@@ -319,8 +311,9 @@ public class WB_Predicates {
 	 *            the pe
 	 * @return the double
 	 */
-	public static double insphereExact(final WB_Point pa, final WB_Point pb,
-			final WB_Point pc, final WB_Point pd, final WB_Point pe) {
+	public static double insphereExact(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd, final WB_Coordinate pe) {
 		WB_DoubleDouble ax, ay, az, bx, by, bz, cx, cy, cz, dx, dy, dz, ex, ey, ez;
 		WB_DoubleDouble aex, bex, cex, dex;
 		WB_DoubleDouble aey, bey, cey, dey;
@@ -334,21 +327,21 @@ public class WB_Predicates {
 
 		det = WB_DoubleDouble.ZERO;
 
-		ax = new WB_DoubleDouble(pa.x);
-		ay = new WB_DoubleDouble(pa.y);
-		az = new WB_DoubleDouble(pa.z);
-		bx = new WB_DoubleDouble(pb.x);
-		by = new WB_DoubleDouble(pb.y);
-		bz = new WB_DoubleDouble(pb.z);
-		cx = new WB_DoubleDouble(pc.x);
-		cy = new WB_DoubleDouble(pc.y);
-		cz = new WB_DoubleDouble(pc.z);
-		dx = new WB_DoubleDouble(pd.x);
-		dy = new WB_DoubleDouble(pd.y);
-		dz = new WB_DoubleDouble(pd.z);
-		ex = new WB_DoubleDouble(pe.x).negate();
-		ey = new WB_DoubleDouble(pe.y).negate();
-		ez = new WB_DoubleDouble(pe.z).negate();
+		ax = new WB_DoubleDouble(pa.xd());
+		ay = new WB_DoubleDouble(pa.yd());
+		az = new WB_DoubleDouble(pa.zd());
+		bx = new WB_DoubleDouble(pb.xd());
+		by = new WB_DoubleDouble(pb.yd());
+		bz = new WB_DoubleDouble(pb.zd());
+		cx = new WB_DoubleDouble(pc.xd());
+		cy = new WB_DoubleDouble(pc.yd());
+		cz = new WB_DoubleDouble(pc.zd());
+		dx = new WB_DoubleDouble(pd.xd());
+		dy = new WB_DoubleDouble(pd.yd());
+		dz = new WB_DoubleDouble(pd.zd());
+		ex = new WB_DoubleDouble(pe.xd()).negate();
+		ey = new WB_DoubleDouble(pe.yd()).negate();
+		ez = new WB_DoubleDouble(pe.zd()).negate();
 
 		aex = ax.add(ex);
 		bex = bx.add(ex);
@@ -418,8 +411,9 @@ public class WB_Predicates {
 	 *            the pe
 	 * @return the double
 	 */
-	public static double inSphereOrient(final WB_Point pa, final WB_Point pb,
-			final WB_Point pc, final WB_Point pd, final WB_Point pe) {
+	public static double inSphereOrient(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd, final WB_Coordinate pe) {
 
 		if (orient(pa, pb, pc, pd) > 0) {
 			return insphere(pa, pb, pc, pd, pe);
@@ -452,8 +446,9 @@ public class WB_Predicates {
 	 *            the q2
 	 * @return true, if successful
 	 */
-	public static boolean diffSides(final WB_Point p1, final WB_Point p2,
-			final WB_Point p3, final WB_Point q1, final WB_Point q2) {
+	public static boolean diffSides(final WB_Coordinate p1,
+			final WB_Coordinate p2, final WB_Coordinate p3,
+			final WB_Coordinate q1, final WB_Coordinate q2) {
 		double a, b;
 		a = orient(p1, p2, p3, q1);
 		b = orient(p1, p2, p3, q2);
@@ -475,9 +470,9 @@ public class WB_Predicates {
 	 *            the q
 	 * @return true, if successful
 	 */
-	public static boolean insideTetrahedron(final WB_Point p1,
-			final WB_Point p2, final WB_Point p3, final WB_Point p4,
-			final WB_Point q) {
+	public static boolean insideTetrahedron(final WB_Coordinate p1,
+			final WB_Coordinate p2, final WB_Coordinate p3,
+			final WB_Coordinate p4, final WB_Coordinate q) {
 
 		return (!diffSides(p1, p2, p3, q, p4) && !diffSides(p2, p3, p4, q, p1)
 				&& !diffSides(p1, p2, p4, q, p3) && !diffSides(p1, p3, p4, q,
@@ -489,57 +484,6 @@ public class WB_Predicates {
 	 */
 	public WB_Predicates() {
 		_exactinit();
-	}
-
-	/**
-	 * Circumradius tetra.
-	 * 
-	 * @param p0
-	 *            the p0
-	 * @param p1
-	 *            the p1
-	 * @param p2
-	 *            the p2
-	 * @param p3
-	 *            the p3
-	 * @return the double
-	 */
-	public double circumradiusTetra(double[] p0, double[] p1, double[] p2,
-			double[] p3) {
-		double t1, t2, t3;
-		double[] circumcenter = circumcenterTetra(p0, p1, p2, p3, null, null,
-				null);
-		t1 = circumcenter[0] - p0[0];
-		t1 = t1 * t1;
-		t2 = circumcenter[1] - p0[1];
-		t2 = t2 * t2;
-		t3 = circumcenter[2] - p0[2];
-		t3 = t3 * t3;
-		return (Math.sqrt(t1 + t2 + t3));
-	}
-
-	/**
-	 * Circumradius tri.
-	 * 
-	 * @param p0
-	 *            the p0
-	 * @param p1
-	 *            the p1
-	 * @param p2
-	 *            the p2
-	 * @return the double
-	 */
-	public double circumradiusTri(double[] p0, double[] p1, double[] p2) {
-
-		double t1, t2, t3;
-		double[] circumcenter = circumcenterTri(p0, p1, p2);
-		t1 = circumcenter[0] - p0[0];
-		t1 = t1 * t1;
-		t2 = circumcenter[1] - p0[1];
-		t2 = t2 * t2;
-		t3 = circumcenter[2] - p0[2];
-		t3 = t3 * t3;
-		return (Math.sqrt(t1 + t2 + t3));
 	}
 
 	/**
@@ -593,7 +537,7 @@ public class WB_Predicates {
 						: -(bdxady))) * ((cdz) >= 0.0 ? (cdz) : -(cdz));
 		errbound = o3derrboundA * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 		return _orientTetraAdapt(p0, p1, p2, p3, permanent);
 	}
@@ -841,7 +785,7 @@ public class WB_Predicates {
 		det = _estimate(finlength, fin1);
 		errbound = o3derrboundB * permanent;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (double) (pa[0] - adx);
@@ -893,7 +837,7 @@ public class WB_Predicates {
 		if ((adxtail == 0.0) && (bdxtail == 0.0) && (cdxtail == 0.0)
 				&& (adytail == 0.0) && (bdytail == 0.0) && (cdytail == 0.0)
 				&& (adztail == 0.0) && (bdztail == 0.0) && (cdztail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = o3derrboundC * permanent + resulterrbound
@@ -908,7 +852,7 @@ public class WB_Predicates {
 						* ((adx * bdytail + bdy * adxtail) - (ady * bdxtail + bdx
 								* adytail)) + cdztail * (adx * bdy - ady * bdx));
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		finnow = fin1;
@@ -2112,23 +2056,23 @@ public class WB_Predicates {
 
 		if (detleft > 0.0) {
 			if (detright <= 0.0) {
-				return (det > 0) ? 1 : -1;
+				return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 			} else {
 				detsum = detleft + detright;
 			}
 		} else if (detleft < 0.0) {
 			if (detright >= 0.0) {
-				return (det > 0) ? 1 : -1;
+				return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 			} else {
 				detsum = -detleft - detright;
 			}
 		} else {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = ccwerrboundA * detsum;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _orientTriAdapt(p0, p1, p2, detsum);
@@ -2233,7 +2177,7 @@ public class WB_Predicates {
 		det = _estimate(4, B);
 		errbound = ccwerrboundB * detsum;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (double) (p0[0] - acx);
@@ -2259,7 +2203,7 @@ public class WB_Predicates {
 
 		if ((acxtail == 0.0) && (acytail == 0.0) && (bcxtail == 0.0)
 				&& (bcytail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = ccwerrboundC * detsum + resulterrbound
@@ -2267,7 +2211,7 @@ public class WB_Predicates {
 		det += (acx * bcytail + bcy * acxtail)
 				- (acy * bcxtail + bcx * acytail);
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		s1 = (double) (acxtail * bcy);
@@ -2575,7 +2519,7 @@ public class WB_Predicates {
 						* cezplus) * dlift;
 		errbound = isperrboundA * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _insphereTetraAdapt(pa, pb, pc, pd, pe, permanent);
@@ -3035,7 +2979,7 @@ public class WB_Predicates {
 		det = _estimate(finlength, fin1);
 		errbound = isperrboundB * permanent;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (double) (pa[0] - aex);
@@ -3102,7 +3046,7 @@ public class WB_Predicates {
 				&& (bextail == 0.0) && (beytail == 0.0) && (beztail == 0.0)
 				&& (cextail == 0.0) && (ceytail == 0.0) && (ceztail == 0.0)
 				&& (dextail == 0.0) && (deytail == 0.0) && (deztail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = isperrboundC * permanent + resulterrbound
@@ -3141,7 +3085,7 @@ public class WB_Predicates {
 						+ cey * ceytail + cez * ceztail)
 						* (dez * ab3 + aez * bd3 + bez * da3)));
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _insphereTetraExact(pa, pb, pc, pd, pe);
@@ -4048,7 +3992,7 @@ public class WB_Predicates {
 						: -(bdxady))) * clift;
 		errbound = iccerrboundA * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _incircleTriAdapt(p0, p1, p2, q, permanent);
@@ -4319,7 +4263,7 @@ public class WB_Predicates {
 		det = _estimate(finlength, fin1);
 		errbound = iccerrboundB * permanent;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (double) (pa[0] - adx);
@@ -4354,7 +4298,7 @@ public class WB_Predicates {
 		cdytail = around + bround;
 		if ((adxtail == 0.0) && (bdxtail == 0.0) && (cdxtail == 0.0)
 				&& (adytail == 0.0) && (bdytail == 0.0) && (cdytail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = iccerrboundC * permanent + resulterrbound
@@ -4374,7 +4318,7 @@ public class WB_Predicates {
 						* (cdx * cdxtail + cdy * cdytail)
 						* (adx * bdy - ady * bdx));
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		finnow = fin1;
@@ -5501,35 +5445,6 @@ public class WB_Predicates {
 	/** The isperrbound c. */
 	private double isperrboundA, isperrboundB, isperrboundC;
 
-	public double circumradiusTetra(final WB_Coordinate p0,
-			final WB_Coordinate p1, final WB_Coordinate p2,
-			final WB_Coordinate p3) {
-		double t1, t2, t3;
-		final double[] circumcenter = circumcenterTetra(p0, p1, p2, p3, null,
-				null, null);
-		t1 = circumcenter[0] - p0.xd();
-		t1 = t1 * t1;
-		t2 = circumcenter[1] - p0.yd();
-		t2 = t2 * t2;
-		t3 = circumcenter[2] - p0.zd();
-		t3 = t3 * t3;
-		return (Math.sqrt(t1 + t2 + t3));
-	}
-
-	public double circumradiusTri(final WB_Coordinate p0,
-			final WB_Coordinate p1, final WB_Coordinate p2) {
-
-		double t1, t2, t3;
-		final double[] circumcenter = circumcenterTri(p0, p1, p2);
-		t1 = circumcenter[0] - p0.xd();
-		t1 = t1 * t1;
-		t2 = circumcenter[1] - p0.yd();
-		t2 = t2 * t2;
-		t3 = circumcenter[2] - p0.zd();
-		t3 = t3 * t3;
-		return (Math.sqrt(t1 + t2 + t3));
-	}
-
 	public double orientTetra(final WB_Coordinate p0, final WB_Coordinate p1,
 			final WB_Coordinate p2, final WB_Coordinate p3) {
 		double adx, bdx, cdx, ady, bdy, cdy, adz, bdz, cdz;
@@ -5569,9 +5484,14 @@ public class WB_Predicates {
 						: -(bdxady))) * ((cdz) >= 0.0 ? (cdz) : -(cdz));
 		errbound = o3derrboundA * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
-		return _orientTetraAdapt(p0, p1, p2, p3, permanent);
+		try {
+			return _orientTetraAdapt(p0, p1, p2, p3, permanent);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return 0;
+		}
+
 	}
 
 	private double _orientTetraAdapt(final WB_Coordinate pa,
@@ -5803,7 +5723,7 @@ public class WB_Predicates {
 		det = _estimate(finlength, fin1);
 		errbound = o3derrboundB * permanent;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (pa.xd() - adx);
@@ -5855,7 +5775,7 @@ public class WB_Predicates {
 		if ((adxtail == 0.0) && (bdxtail == 0.0) && (cdxtail == 0.0)
 				&& (adytail == 0.0) && (bdytail == 0.0) && (cdytail == 0.0)
 				&& (adztail == 0.0) && (bdztail == 0.0) && (cdztail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = o3derrboundC * permanent + resulterrbound
@@ -5870,7 +5790,7 @@ public class WB_Predicates {
 						* ((adx * bdytail + bdy * adxtail) - (ady * bdxtail + bdx
 								* adytail)) + cdztail * (adx * bdy - ady * bdx));
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		finnow = fin1;
@@ -7064,26 +6984,26 @@ public class WB_Predicates {
 
 		if (detleft > 0.0) {
 			if (detright <= 0.0) {
-				return (det > 0) ? 1 : -1;
+				return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 			} else {
 				detsum = detleft + detright;
 			}
 		} else if (detleft < 0.0) {
 			if (detright >= 0.0) {
-				return (det > 0) ? 1 : -1;
+				return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 			} else {
 				detsum = -detleft - detright;
 			}
 		} else {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = ccwerrboundA * detsum;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
-
-		return _orientTriAdapt(p0, p1, p2, detsum);
+		det = _orientTriAdapt(p0, p1, p2, detsum);
+		return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 	}
 
 	private double _orientTriAdapt(final WB_Coordinate p0,
@@ -7172,7 +7092,7 @@ public class WB_Predicates {
 		det = _estimate(4, B);
 		errbound = ccwerrboundB * detsum;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (p0.xd() - acx);
@@ -7198,7 +7118,7 @@ public class WB_Predicates {
 
 		if ((acxtail == 0.0) && (acytail == 0.0) && (bcxtail == 0.0)
 				&& (bcytail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = ccwerrboundC * detsum + resulterrbound
@@ -7206,7 +7126,7 @@ public class WB_Predicates {
 		det += (acx * bcytail + bcy * acxtail)
 				- (acy * bcxtail + bcx * acytail);
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		s1 = (acxtail * bcy);
@@ -7488,7 +7408,7 @@ public class WB_Predicates {
 						* cezplus) * dlift;
 		errbound = isperrboundA * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _insphereTetraAdapt(pa, pb, pc, pd, pe, permanent);
@@ -7933,7 +7853,7 @@ public class WB_Predicates {
 		det = _estimate(finlength, fin1);
 		errbound = isperrboundB * permanent;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (pa.xd() - aex);
@@ -8000,7 +7920,7 @@ public class WB_Predicates {
 				&& (bextail == 0.0) && (beytail == 0.0) && (beztail == 0.0)
 				&& (cextail == 0.0) && (ceytail == 0.0) && (ceztail == 0.0)
 				&& (dextail == 0.0) && (deytail == 0.0) && (deztail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = isperrboundC * permanent + resulterrbound
@@ -8039,7 +7959,7 @@ public class WB_Predicates {
 						+ cey * ceytail + cez * ceztail)
 						* (dez * ab3 + aez * bd3 + bez * da3)));
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _insphereTetraExact(pa, pb, pc, pd, pe);
@@ -8840,7 +8760,7 @@ public class WB_Predicates {
 						: -(bdxady))) * clift;
 		errbound = iccerrboundA * permanent;
 		if ((det > errbound) || (-det > errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		return _incircleTriAdapt(p0, p1, p2, q, permanent);
@@ -9097,7 +9017,7 @@ public class WB_Predicates {
 		det = _estimate(finlength, fin1);
 		errbound = iccerrboundB * permanent;
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		bvirt = (pa.xd() - adx);
@@ -9132,7 +9052,7 @@ public class WB_Predicates {
 		cdytail = around + bround;
 		if ((adxtail == 0.0) && (bdxtail == 0.0) && (cdxtail == 0.0)
 				&& (adytail == 0.0) && (bdytail == 0.0) && (cdytail == 0.0)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		errbound = iccerrboundC * permanent + resulterrbound
@@ -9152,7 +9072,7 @@ public class WB_Predicates {
 						* (cdx * cdxtail + cdy * cdytail)
 						* (adx * bdy - ady * bdx));
 		if ((det >= errbound) || (-det >= errbound)) {
-			return (det > 0) ? 1 : -1;
+			return (det > 0) ? 1 : ((det == 0) ? 0 : -1);
 		}
 
 		finnow = fin1;
@@ -10253,61 +10173,6 @@ public class WB_Predicates {
 		return Q;
 	}
 
-	/**
-	 * Circumcenter tri.
-	 * 
-	 * @param a
-	 *            the a
-	 * @param b
-	 *            the b
-	 * @param c
-	 *            the c
-	 * @return the double[]
-	 */
-	public double[] circumcenterTri(double[] a, double[] b, double[] c) {
-		double xba, yba, zba, xca, yca, zca;
-		double balength, calength;
-		double xcrossbc, ycrossbc, zcrossbc;
-		double denominator;
-		double xcirca, ycirca, zcirca;
-
-		xba = b[0] - a[0];
-		yba = b[1] - a[1];
-		zba = b[2] - a[2];
-		xca = c[0] - a[0];
-		yca = c[1] - a[1];
-		zca = c[2] - a[2];
-
-		balength = xba * xba + yba * yba + zba * zba;
-		calength = xca * xca + yca * yca + zca * zca;
-
-		xcrossbc = yba * zca - yca * zba;
-		ycrossbc = zba * xca - zca * xba;
-		zcrossbc = xba * yca - xca * yba;
-
-		denominator = 0.5 / (xcrossbc * xcrossbc + ycrossbc * ycrossbc + zcrossbc
-				* zcrossbc);
-
-		xcirca = ((balength * yca - calength * yba) * zcrossbc - (balength
-				* zca - calength * zba)
-				* ycrossbc)
-				* denominator;
-		ycirca = ((balength * zca - calength * zba) * xcrossbc - (balength
-				* xca - calength * xba)
-				* zcrossbc)
-				* denominator;
-		zcirca = ((balength * xca - calength * xba) * ycrossbc - (balength
-				* yca - calength * yba)
-				* xcrossbc)
-				* denominator;
-		double[] circumcenter = new double[3];
-		circumcenter[0] = xcirca + a[0];
-		circumcenter[1] = ycirca + a[1];
-		circumcenter[2] = zcirca + a[2];
-		return circumcenter;
-
-	}
-
 	private void _exactinit() {
 		double half;
 		double check, lastcheck;
@@ -10504,6 +10369,12 @@ public class WB_Predicates {
 	}
 
 	public double[] circumcenterTetra(final double[] a, final double[] b,
+			final double[] c, final double[] d) {
+		return circumcenterTetra(a, b, c, d, null, null, null);
+
+	}
+
+	public double[] circumcenterTetra(final double[] a, final double[] b,
 			final double[] c, final double[] d, final double[] xi,
 			final double[] eta, final double[] zeta) {
 		double xba, yba, zba, xca, yca, zca, xda, yda, zda;
@@ -10565,6 +10436,12 @@ public class WB_Predicates {
 					* (2.0 * denominator);
 		}
 		return circumcenter;
+	}
+
+	public double[] circumcenterTetra(final WB_Coordinate a,
+			final WB_Coordinate b, final WB_Coordinate c, final WB_Coordinate d) {
+
+		return circumcenterTetra(a, b, c, d, null, null, null);
 	}
 
 	public double[] circumcenterTetra(final WB_Coordinate a,
@@ -10632,6 +10509,133 @@ public class WB_Predicates {
 		return circumcenter;
 	}
 
+	/**
+	 * Circumradius tetra.
+	 * 
+	 * @param p0
+	 *            the p0
+	 * @param p1
+	 *            the p1
+	 * @param p2
+	 *            the p2
+	 * @param p3
+	 *            the p3
+	 * @return the double
+	 */
+	public double circumradiusTetra(double[] p0, double[] p1, double[] p2,
+			double[] p3) {
+		double t1, t2, t3;
+		double[] circumcenter = circumcenterTetra(p0, p1, p2, p3, null, null,
+				null);
+		t1 = circumcenter[0] - p0[0];
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0[1];
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0[2];
+		t3 = t3 * t3;
+		return (Math.sqrt(t1 + t2 + t3));
+	}
+
+	public double circumradiusTetra(final WB_Coordinate p0,
+			final WB_Coordinate p1, final WB_Coordinate p2,
+			final WB_Coordinate p3) {
+		double t1, t2, t3;
+		final double[] circumcenter = circumcenterTetra(p0, p1, p2, p3, null,
+				null, null);
+		t1 = circumcenter[0] - p0.xd();
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0.yd();
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0.zd();
+		t3 = t3 * t3;
+		return (Math.sqrt(t1 + t2 + t3));
+	}
+
+	public WB_Sphere circumsphereTetra(double[] p0, double[] p1, double[] p2,
+			double[] p3) {
+		double t1, t2, t3;
+		double[] circumcenter = circumcenterTetra(p0, p1, p2, p3, null, null,
+				null);
+		t1 = circumcenter[0] - p0[0];
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0[1];
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0[2];
+		t3 = t3 * t3;
+		return new WB_Sphere(new WB_Point(circumcenter),
+				Math.sqrt(t1 + t2 + t3));
+	}
+
+	public WB_Sphere circumsphereTetra(WB_Coordinate p0, WB_Coordinate p1,
+			WB_Coordinate p2, WB_Coordinate p3) {
+		double t1, t2, t3;
+		double[] circumcenter = circumcenterTetra(p0, p1, p2, p3, null, null,
+				null);
+		t1 = circumcenter[0] - p0.xd();
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0.yd();
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0.zd();
+		t3 = t3 * t3;
+		return new WB_Sphere(new WB_Point(circumcenter),
+				Math.sqrt(t1 + t2 + t3));
+	}
+
+	/**
+	 * Circumcenter tri.
+	 * 
+	 * @param a
+	 *            the a
+	 * @param b
+	 *            the b
+	 * @param c
+	 *            the c
+	 * @return the double[]
+	 */
+	public double[] circumcenterTri(double[] a, double[] b, double[] c) {
+		double xba, yba, zba, xca, yca, zca;
+		double balength, calength;
+		double xcrossbc, ycrossbc, zcrossbc;
+		double denominator;
+		double xcirca, ycirca, zcirca;
+
+		xba = b[0] - a[0];
+		yba = b[1] - a[1];
+		zba = b[2] - a[2];
+		xca = c[0] - a[0];
+		yca = c[1] - a[1];
+		zca = c[2] - a[2];
+
+		balength = xba * xba + yba * yba + zba * zba;
+		calength = xca * xca + yca * yca + zca * zca;
+
+		xcrossbc = yba * zca - yca * zba;
+		ycrossbc = zba * xca - zca * xba;
+		zcrossbc = xba * yca - xca * yba;
+
+		denominator = 0.5 / (xcrossbc * xcrossbc + ycrossbc * ycrossbc + zcrossbc
+				* zcrossbc);
+
+		xcirca = ((balength * yca - calength * yba) * zcrossbc - (balength
+				* zca - calength * zba)
+				* ycrossbc)
+				* denominator;
+		ycirca = ((balength * zca - calength * zba) * xcrossbc - (balength
+				* xca - calength * xba)
+				* zcrossbc)
+				* denominator;
+		zcirca = ((balength * xca - calength * xba) * ycrossbc - (balength
+				* yca - calength * yba)
+				* xcrossbc)
+				* denominator;
+		double[] circumcenter = new double[3];
+		circumcenter[0] = xcirca + a[0];
+		circumcenter[1] = ycirca + a[1];
+		circumcenter[2] = zcirca + a[2];
+		return circumcenter;
+
+	}
+
 	public double[] circumcenterTri(final WB_Coordinate a,
 			final WB_Coordinate b, final WB_Coordinate c) {
 		double xba, yba, zba, xca, yca, zca;
@@ -10675,6 +10679,298 @@ public class WB_Predicates {
 		circumcenter[2] = zcirca + a.zd();
 		return circumcenter;
 
+	}
+
+	public double circumradiusTri(final WB_Coordinate p0,
+			final WB_Coordinate p1, final WB_Coordinate p2) {
+
+		double t1, t2, t3;
+		final double[] circumcenter = circumcenterTri(p0, p1, p2);
+		t1 = circumcenter[0] - p0.xd();
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0.yd();
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0.zd();
+		t3 = t3 * t3;
+		return (Math.sqrt(t1 + t2 + t3));
+	}
+
+	/**
+	 * Circumradius tri.
+	 * 
+	 * @param p0
+	 *            the p0
+	 * @param p1
+	 *            the p1
+	 * @param p2
+	 *            the p2
+	 * @return the double
+	 */
+	public double circumradiusTri(double[] p0, double[] p1, double[] p2) {
+
+		double t1, t2, t3;
+		double[] circumcenter = circumcenterTri(p0, p1, p2);
+		t1 = circumcenter[0] - p0[0];
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0[1];
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0[2];
+		t3 = t3 * t3;
+		return (Math.sqrt(t1 + t2 + t3));
+	}
+
+	public WB_Sphere circumsphereTri(final WB_Coordinate p0,
+			final WB_Coordinate p1, final WB_Coordinate p2) {
+
+		double t1, t2, t3;
+		final double[] circumcenter = circumcenterTri(p0, p1, p2);
+		t1 = circumcenter[0] - p0.xd();
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0.yd();
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0.zd();
+		t3 = t3 * t3;
+		return new WB_Sphere(new WB_Point(circumcenter),
+				Math.sqrt(t1 + t2 + t3));
+	}
+
+	public WB_Sphere circumsphereTri(final double[] p0, final double[] p1,
+			final double[] p2) {
+
+		double t1, t2, t3;
+		final double[] circumcenter = circumcenterTri(p0, p1, p2);
+		t1 = circumcenter[0] - p0[0];
+		t1 = t1 * t1;
+		t2 = circumcenter[1] - p0[1];
+		t2 = t2 * t2;
+		t3 = circumcenter[2] - p0[2];
+		t3 = t3 * t3;
+		return new WB_Sphere(new WB_Point(circumcenter),
+				Math.sqrt(t1 + t2 + t3));
+	}
+
+	// >0 if pa,pb,pc ccw
+	// <0 if pa,pb,pc cw
+	// =0 if colinear
+
+	public static double orient2D(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc) {
+		if (orientErrorBound2D == -1) {
+			init();
+		}
+		double detleft, detright, det;
+		double detsum, errbound;
+
+		detleft = (pa.xd() - pc.xd()) * (pb.yd() - pc.yd());
+		detright = (pa.yd() - pc.yd()) * (pb.xd() - pc.xd());
+		det = detleft - detright;
+
+		if (detleft > 0.0) {
+			if (detright <= 0.0) {
+				return Math.signum(det);
+			} else {
+				detsum = detleft + detright;
+			}
+		} else if (detleft < 0.0) {
+			if (detright >= 0.0) {
+				return Math.signum(det);
+			} else {
+				detsum = -detleft - detright;
+			}
+		} else {
+			return Math.signum(det);
+		}
+
+		errbound = orientErrorBound2D * detsum;
+		if ((det >= errbound) || (-det >= errbound)) {
+			return Math.signum(det);
+		}
+		return orientDD2D(pa, pb, pc);
+	}
+
+	public static double orientDD2D(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc) {
+		WB_DoubleDouble ax, ay, bx, by, cx, cy;
+		WB_DoubleDouble acx, bcx, acy, bcy;
+		WB_DoubleDouble detleft, detright, det;
+		det = WB_DoubleDouble.valueOf(0.0);
+		ax = WB_DoubleDouble.valueOf(pa.xd());
+		ay = WB_DoubleDouble.valueOf(pa.yd());
+		bx = WB_DoubleDouble.valueOf(pb.xd());
+		by = WB_DoubleDouble.valueOf(pb.yd());
+		cx = WB_DoubleDouble.valueOf(pc.xd());
+		cy = WB_DoubleDouble.valueOf(pc.yd());
+		acx = ax.add(cx.negate());
+		bcx = bx.add(cx.negate());
+		acy = ay.add(cy.negate());
+		bcy = by.add(cy.negate());
+		detleft = acx.multiply(bcy);
+		detright = acy.multiply(bcx);
+		det = detleft.add(detright.negate());
+
+		return det.compareTo(WB_DoubleDouble.ZERO);
+	}
+
+	// >0 if pd inside circle through pa,pb,pc (if ccw)
+	// <0 if pd outside circle through pa,pb,pc (if ccw)
+	// =0 if on circle
+
+	public static double incircle2D(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd) {
+
+		if (incircleErrorBound2D == -1) {
+			init();
+		}
+		double adx, ady, bdx, bdy, cdx, cdy;
+		double bdxcdy, cdxbdy, cdxady, adxcdy, adxbdy, bdxady;
+		double alift, blift, clift;
+		double det;
+		double permanent, errbound;
+
+		adx = pa.xd() - pd.xd();
+		bdx = pb.xd() - pd.xd();
+		cdx = pc.xd() - pd.xd();
+		ady = pa.yd() - pd.yd();
+		bdy = pb.yd() - pd.yd();
+		cdy = pc.yd() - pd.yd();
+
+		bdxcdy = bdx * cdy;
+		cdxbdy = cdx * bdy;
+		alift = adx * adx + ady * ady;
+
+		cdxady = cdx * ady;
+		adxcdy = adx * cdy;
+		blift = bdx * bdx + bdy * bdy;
+
+		adxbdy = adx * bdy;
+		bdxady = bdx * ady;
+		clift = cdx * cdx + cdy * cdy;
+
+		det = alift * (bdxcdy - cdxbdy) + blift * (cdxady - adxcdy) + clift
+				* (adxbdy - bdxady);
+
+		if (bdxcdy < 0) {
+			bdxcdy = -bdxcdy;
+		}
+		if (cdxbdy < 0) {
+			cdxbdy = -cdxbdy;
+		}
+		if (cdxady < 0) {
+			cdxady = -cdxady;
+		}
+		if (adxcdy < 0) {
+			adxcdy = -adxcdy;
+		}
+		if (adxbdy < 0) {
+			adxbdy = -adxbdy;
+		}
+		if (bdxady < 0) {
+			bdxady = -bdxady;
+		}
+
+		permanent = (bdxcdy + cdxbdy) * alift + (cdxady + adxcdy) * blift
+				+ (adxbdy + bdxady) * clift;
+		errbound = incircleErrorBound2D * permanent;
+		if ((det > errbound) || (-det > errbound)) {
+			return Math.signum(det);
+		}
+		return incircleDD2D(pa, pb, pc, pd);
+	}
+
+	public static double incircleDD2D(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd) {
+		WB_DoubleDouble ax, ay, bx, by, cx, cy, dx, dy;
+		WB_DoubleDouble adx, ady, bdx, bdy, cdx, cdy;
+		WB_DoubleDouble bdxcdy, cdxbdy, cdxady, adxcdy, adxbdy, bdxady;
+		WB_DoubleDouble alift, blift, clift;
+		WB_DoubleDouble det;
+
+		det = WB_DoubleDouble.valueOf(0.0);
+
+		ax = WB_DoubleDouble.valueOf(pa.xd());
+		ay = WB_DoubleDouble.valueOf(pa.yd());
+		bx = WB_DoubleDouble.valueOf(pb.xd());
+		by = WB_DoubleDouble.valueOf(pb.yd());
+		cx = WB_DoubleDouble.valueOf(pc.xd());
+		cy = WB_DoubleDouble.valueOf(pc.yd());
+		dx = WB_DoubleDouble.valueOf(pd.xd());
+		dy = WB_DoubleDouble.valueOf(pd.yd());
+
+		dx = dx.negate();
+		dy = dy.negate();
+
+		adx = ax.add(dx);
+		bdx = bx.add(dx);
+		cdx = cx.add(dx);
+		ady = ay.add(dy);
+		bdy = by.add(dy);
+		cdy = cy.add(dy);
+
+		bdxcdy = bdx.multiply(cdy);
+		cdxbdy = cdx.multiply(bdy);
+
+		cdxady = cdx.multiply(ady);
+		adxcdy = adx.multiply(cdy);
+
+		adxbdy = adx.multiply(bdy);
+		bdxady = bdx.multiply(ady);
+
+		adx = adx.multiply(adx);
+		ady = ady.multiply(ady);
+		alift = adx.add(ady);
+
+		bdx = bdx.multiply(bdx);
+		bdy = bdy.multiply(bdy);
+		blift = bdx.add(bdy);
+
+		cdx = cdx.multiply(cdx);
+		cdy = cdy.multiply(cdy);
+		clift = cdx.add(cdy);
+
+		alift = alift.multiply(bdxcdy.add(cdxbdy.negate()));
+		blift = blift.multiply(cdxady.add(adxcdy.negate()));
+		clift = clift.multiply(adxbdy.add(bdxady.negate()));
+
+		det = alift.add(blift).add(clift);
+
+		return det.compareTo(WB_DoubleDouble.ZERO);
+	}
+
+	// >0 if pd inside circle through pa,pb,pc (cw or ccw)
+	// <0 if pd outside circle through pa,pb,pc (cw or ccw)
+	// =0 if on circle
+
+	public static double incircle2DOrient(final WB_Coordinate pa,
+			final WB_Coordinate pb, final WB_Coordinate pc,
+			final WB_Coordinate pd) {
+
+		if (orient2D(pa, pb, pc) > 0) {
+			return incircle2D(pa, pb, pc, pd);
+		}
+		final double ic = incircle2D(pa, pb, pc, pd);
+		if (ic > 0) {
+			return -1;
+		}
+		if (ic < 0) {
+			return 1;
+		}
+		return 0;
+
+	}
+
+	public static boolean getIntersection2DProper(final WB_Coordinate a,
+			final WB_Coordinate b, final WB_Coordinate c, final WB_Coordinate d) {
+		if (orient2D(a, b, c) == 0 || orient2D(a, b, d) == 0
+				|| orient2D(c, d, a) == 0 || orient2D(c, d, b) == 0) {
+			return false;
+		} else if (orient2D(a, b, c) * orient2D(a, b, d) > 0
+				|| orient2D(c, d, a) * orient2D(c, d, b) > 0) {
+			return false;
+		} else {
+			return true;
+		}
 	}
 
 	/**

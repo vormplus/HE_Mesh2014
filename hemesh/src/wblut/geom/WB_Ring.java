@@ -3,7 +3,7 @@ package wblut.geom;
 import java.util.ArrayList;
 import java.util.List;
 
-import wblut.WB_Epsilon;
+import wblut.math.WB_Epsilon;
 
 public class WB_Ring extends WB_PolyLine {
 
@@ -16,12 +16,12 @@ public class WB_Ring extends WB_PolyLine {
 	 * @return direction
 	 */
 	@Override
-	public WB_Vector getDirection(final int i) {
+	public WB_IndexedVector getDirection(final int i) {
 		if ((i < 0) || (i > n - 1)) {
 			throw new IllegalArgumentException("Parameter must between 0 and "
 					+ (n - 1) + ".");
 		}
-		return directions.getCoordinate(i);
+		return directions.getVector(i);
 	}
 
 	/**
@@ -36,7 +36,7 @@ public class WB_Ring extends WB_PolyLine {
 					+ (n - 1) + ".");
 		}
 		WB_Vector n = geometryfactory.createVector(0, 0, 1);
-		n = n.cross(directions.getCoordinate(i));
+		n = n.cross(directions.getVector(i));
 		final double d = n.getLength();
 		n = n.div(d);
 		if (WB_Epsilon.isZero(d)) {
@@ -189,10 +189,10 @@ public class WB_Ring extends WB_PolyLine {
 		}
 
 		// find highest point
-		WB_Point hiPt = getPoint(0);
+		WB_IndexedPoint hiPt = getPoint(0);
 		int hiIndex = 0;
 		for (int i = 1; i <= nPts; i++) {
-			final WB_Point p = getPoint(i);
+			final WB_IndexedPoint p = getPoint(i);
 			if (p.yd() > hiPt.yd()) {
 				hiPt = p;
 				hiIndex = i;
@@ -214,8 +214,8 @@ public class WB_Ring extends WB_PolyLine {
 			iNext = (iNext + 1) % nPts;
 		} while (getPoint(iNext).equals(hiPt) && iNext != hiIndex);
 
-		final WB_Point prev = getPoint(iPrev);
-		final WB_Point next = getPoint(iNext);
+		final WB_IndexedPoint prev = getPoint(iPrev);
+		final WB_IndexedPoint next = getPoint(iNext);
 
 		/**
 		 * This check catches cases where the ring contains an A-B-A
@@ -253,6 +253,77 @@ public class WB_Ring extends WB_PolyLine {
 	@Override
 	public WB_Ring apply(final WB_Transform T) {
 		return geometryfactory.createRing(points.applyAsPoint(T));
+
+	}
+
+	public WB_IndexedPoint getPoint(final int i) {
+		if ((i < 0) || (i > n - 1)) {
+			throw new IllegalArgumentException("Parameter " + i
+					+ " must between 0 and " + (n - 1) + ".");
+		}
+		return points.getPoint(i);
+	}
+
+	public double getd(final int i, final int j) {
+		if ((i < 0) || (i > n - 1)) {
+			throw new IllegalArgumentException("Parameter " + i
+					+ " must between 0 and " + (n - 1) + ".");
+		}
+		return points.get(i, j);
+	}
+
+	public float getf(final int i, final int j) {
+		if ((i < 0) || (i > n - 1)) {
+			throw new IllegalArgumentException("Parameter " + i
+					+ " must between 0 and " + (n - 1) + ".");
+		}
+		return (float) points.get(i, j);
+	}
+
+	public WB_Point getPointOnLine(final double t) {
+		if ((t < 0) || (t > incLengths[n - 1])) {
+			throw new IllegalArgumentException(
+					"Parameter must between 0 and length of polyline"
+							+ incLengths[n - 1] + " .");
+		}
+		if (t == 0) {
+			return new WB_Point(points.getPoint(0));
+		}
+		int index = 0;
+		while (t > incLengths[index]) {
+			index++;
+		}
+
+		final double x = t - incLengths[index];
+
+		return points.getPoint(index).addMul(x, directions.getVector(index));
+	}
+
+	public WB_Point getParametricPointOnLine(final double t) {
+		if ((t < 0) || (t > n - 1)) {
+			throw new IllegalArgumentException("Parameter must between 0 and "
+					+ (n - 1) + ".");
+		}
+		final double ft = t - (int) t;
+		if (ft == 0.0) {
+			return new WB_Point(points.getPoint((int) t));
+		}
+
+		return points.getPoint((int) t).mulAddMul(1 - ft, ft,
+				points.getPoint(1 + (int) t));
+	}
+
+	public int getNumberOfPoints() {
+		return n;
+	}
+
+	public WB_Segment getSegment(final int i) {
+		if ((i < 0) || (i > n - 1)) {
+			throw new IllegalArgumentException("Parameter must between 0 and "
+					+ (n - 1) + ".");
+		}
+		return geometryfactory
+				.createSegment(getPoint(i), getPoint((i + 1) % n));
 	}
 
 }

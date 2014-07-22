@@ -2,7 +2,9 @@ package wblut.geom;
 
 import java.util.LinkedList;
 
-import wblut.WB_Epsilon;
+import wblut.geom.WB_AABBTree.WB_AABBNode;
+import wblut.geom.interfaces.Triangle;
+import wblut.math.WB_Epsilon;
 
 public class WB_Containment {
 
@@ -15,7 +17,8 @@ public class WB_Containment {
 			if (contains(p, current.getAABB())) {
 				if (current.isLeaf()) {
 					return true;
-				} else {
+				}
+				else {
 					if (current.getPosChild() != null) {
 						queue.add(current.getPosChild());
 					}
@@ -56,7 +59,7 @@ public class WB_Containment {
 
 	public static boolean contains(final WB_Coordinate p,
 			final WB_Coordinate A, final WB_Coordinate B, final WB_Coordinate C) {
-		if (WB_Epsilon.isZeroSq(WB_Distance3D.sqDistanceToLine(A, B, C))) {
+		if (WB_Epsilon.isZeroSq(WB_Distance.getSqDistanceToLine3D(A, B, C))) {
 			return false;
 		}
 		if (sameSide(p, A, B, C) && sameSide(p, B, A, C)

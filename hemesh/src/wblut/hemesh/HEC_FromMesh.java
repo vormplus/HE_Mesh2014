@@ -1,23 +1,26 @@
 package wblut.hemesh;
 
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import javolution.util.FastList;
-import javolution.util.FastMap;
-import wblut.WB_Epsilon;
+import javolution.util.FastTable;
+import wblut.geom.WB_Coordinate;
 import wblut.geom.WB_KDTree;
 import wblut.geom.WB_KDTree.WB_KDEntry;
 import wblut.geom.WB_Mesh;
-import wblut.geom.WB_Point;
+import wblut.geom.WB_MeshCreator;
+import wblut.math.WB_Epsilon;
 
 /**
  * Creates a new mesh from a list of vertices and faces. Vertices can be
  * duplicate.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 public class HEC_FromMesh extends HEC_Creator {
 
@@ -31,18 +34,27 @@ public class HEC_FromMesh extends HEC_Creator {
 	private boolean normalcheck;
 
 	/**
-	 * Instantiates a new HEC_Facelist ²
+	 * Instantiates a new HEC_Facelist ï¿½
 	 */
 	public HEC_FromMesh(final WB_Mesh source) {
 		super();
 		this.source = source;
 		duplicate = true;
-		normalcheck = true;
+		normalcheck = false;
+		override = true;
+	}
+
+	public HEC_FromMesh(final WB_MeshCreator source) {
+		super();
+		this.source = source.getMesh();
+		duplicate = true;
+		normalcheck = false;
+		override = true;
 	}
 
 	/**
 	 * Duplicate vertices in input?.
-	 * 
+	 *
 	 * @param b
 	 *            true/false
 	 * @return self
@@ -54,7 +66,7 @@ public class HEC_FromMesh extends HEC_Creator {
 
 	/**
 	 * Check face normals?.
-	 * 
+	 *
 	 * @param b
 	 *            true/false
 	 * @return self
@@ -78,7 +90,7 @@ public class HEC_FromMesh extends HEC_Creator {
 			return mesh;
 
 		}
-		final int[][] faces = source.getFaces();
+		final int[][] faces = source.getFacesAsInt();
 
 		final List<HE_Vertex> uniqueVertices = getUniqueVertices(mesh);
 
@@ -121,11 +133,11 @@ public class HEC_FromMesh extends HEC_Creator {
 					he.getVertex().setHalfedge(he);
 				}
 				mesh.add(hef);
-				mesh.cycleHalfedges(faceEdges);
+				HE_Mesh.cycleHalfedges(faceEdges);
 				mesh.addHalfedges(faceEdges);
 			}
 		}
-		mesh.pairHalfedges();
+		mesh.pairHalfedgesAndCreateEdges();
 		mesh.capHalfedges();
 
 		return mesh;
@@ -133,7 +145,7 @@ public class HEC_FromMesh extends HEC_Creator {
 
 	/**
 	 * Hash.
-	 * 
+	 *
 	 * @param u
 	 *            the u
 	 * @param v
@@ -148,7 +160,7 @@ public class HEC_FromMesh extends HEC_Creator {
 
 	/**
 	 * Ohash.
-	 * 
+	 *
 	 * @param u
 	 *            the u
 	 * @param v
@@ -170,7 +182,7 @@ public class HEC_FromMesh extends HEC_Creator {
 
 	/**
 	 * Consistent order.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -197,30 +209,29 @@ public class HEC_FromMesh extends HEC_Creator {
 	}
 
 	private List<HE_Vertex> getUniqueVertices(final HE_Mesh mesh) {
-		final List<HE_Vertex> uniqueVertices = new FastList<HE_Vertex>(
-				source.getNumberOfVertices());
+		final List<HE_Vertex> uniqueVertices = new FastTable<HE_Vertex>();
 		if (duplicate) {
-			final WB_KDTree<WB_Point, Integer> kdtree = new WB_KDTree<WB_Point, Integer>();
-			WB_KDEntry<WB_Point, Integer> neighbor;
+			final WB_KDTree<WB_Coordinate, Integer> kdtree = new WB_KDTree<WB_Coordinate, Integer>();
+			WB_KDEntry<WB_Coordinate, Integer> neighbor;
 			HE_Vertex v = new HE_Vertex(source.getVertex(0));
 			kdtree.add(source.getVertex(0), 0);
 			uniqueVertices.add(v);
 			mesh.add(v);
-			int nuv = 1;
 			for (int i = 1; i < source.getNumberOfVertices(); i++) {
 				v = new HE_Vertex(source.getVertex(i));
 				v.setLabel(i);
-				neighbor = kdtree.getNearestNeighbor(v.pos);
+				neighbor = kdtree.getNearestNeighbor(v);
 				if (neighbor.d2 < WB_Epsilon.SQEPSILON) {
 					uniqueVertices.add(uniqueVertices.get(neighbor.value));
-				} else {
+				}
+				else {
 					kdtree.add(source.getVertex(i), i);
 					uniqueVertices.add(v);
 					mesh.add(uniqueVertices.get(i));
-					nuv++;
 				}
 			}
-		} else {
+		}
+		else {
 			HE_Vertex v;
 			for (int i = 0; i < source.getNumberOfVertices(); i++) {
 				v = new HE_Vertex(source.getVertex(i));
@@ -234,8 +245,8 @@ public class HEC_FromMesh extends HEC_Creator {
 	}
 
 	private void unifyNormals(final int[][] faces) {
+		final TLongObjectMap<int[]> edges = new TLongObjectHashMap<int[]>();
 
-		final FastMap<Long, int[]> edges = new FastMap<Long, int[]>();
 		for (int i = 0; i < faces.length; i++) {
 			final int[] face = faces[i];
 			final int fl = face.length;
@@ -244,12 +255,14 @@ public class HEC_FromMesh extends HEC_Creator {
 				final int[] efaces = edges.get(ohash);
 				if (efaces == null) {
 					edges.put(ohash, new int[] { i, -1 });
-				} else {
+				}
+				else {
 					efaces[1] = i;
 				}
 			}
 		}
 		final boolean[] visited = new boolean[faces.length];
+
 		final LinkedList<Integer> queue = new LinkedList<Integer>();
 		boolean facesleft = false;
 		int starti = 0;
@@ -268,7 +281,8 @@ public class HEC_FromMesh extends HEC_Creator {
 					int neighbor;
 					if (ns[0] == index) {
 						neighbor = ns[1];
-					} else {
+					}
+					else {
 						neighbor = ns[0];
 					}
 					if (neighbor > -1) {

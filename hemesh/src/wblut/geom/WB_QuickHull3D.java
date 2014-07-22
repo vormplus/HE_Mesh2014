@@ -19,9 +19,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import javolution.util.FastList;
-import wblut.WB_Epsilon;
-import wblut.external.straightskeleton.Point3d;
+import javolution.util.FastTable;
+import wblut.math.WB_Epsilon;
 
 /**
  * Computes the convex hull of a set of three dimensional points.
@@ -38,9 +37,9 @@ import wblut.external.straightskeleton.Point3d;
  * 
  * <p>
  * A hull is constructed by providing a set of points to either a constructor or
- * a {@link #build(Point3d[]) build} method. After the hull is built, its
- * vertices and faces can be retrieved using {@link #getVertices() getVertices}
- * and {@link #getFaces() getFaces}. A typical usage might look like this:
+ * a build method. After the hull is built, its vertices and faces can be
+ * retrieved using getVertices and getFaces. A typical usage might look like
+ * this:
  * 
  * <pre>
  * // x y z coordinates of 6 points
@@ -69,9 +68,8 @@ import wblut.external.straightskeleton.Point3d;
  * }
  * </pre>
  * 
- * As a convenience, there are also {@link #build(double[]) build} and
- * {@link #getVertices(double[]) getVertex} methods which pass point information
- * using an array of doubles.
+ * As a convenience, there are also build and getVertex methods which pass point
+ * information using an array of doubles.
  * 
  * <h3><a name=distTol>Robustness</h3> Because this algorithm uses floating
  * point arithmetic, it is potentially vulnerable to errors arising from
@@ -80,12 +78,11 @@ import wblut.external.straightskeleton.Point3d;
  * clearly convex. A face is convex if its edges are convex, and an edge is
  * convex if the centroid of each adjacent plane is clearly <i>below</i> the
  * plane of the other face. The centroid is considered below a plane if its
- * distance to the plane is less than the negative of a
- * {@link #getDistanceTolerance() distance tolerance}. This tolerance represents
- * the smallest distance that can be reliably computed within the available
- * numeric precision. It is normally computed automatically from the point data,
- * although an application may {@link #setExplicitDistanceTolerance set this
- * tolerance explicitly}.
+ * distance to the plane is less than the negative of a distance tolerance. This
+ * tolerance represents the smallest distance that can be reliably computed
+ * within the available numeric precision. It is normally computed automatically
+ * from the point data, although an application may set this tolerance
+ * explicitly.
  * 
  * <p>
  * Numerical problems are more likely to arise in situations where data points
@@ -93,30 +90,30 @@ import wblut.external.straightskeleton.Point3d;
  * QuickHull3D for such situations by computing the convex hull of a random
  * point set, then adding additional randomly chosen points which lie very close
  * to the hull vertices and edges, and computing the convex hull again. The hull
- * is deemed correct if {@link #check check} returns <code>true</code>. These
- * tests have been successful for a large number of trials and so we are
- * confident that QuickHull3D is reasonably robust.
+ * is deemed correct if check returns <code>true</code>. These tests have been
+ * successful for a large number of trials and so we are confident that
+ * QuickHull3D is reasonably robust.
  * 
  * <h3>Merged Faces</h3> The merging of faces means that the faces returned by
  * QuickHull3D may be convex polygons instead of triangles. If triangles are
- * desired, the application may {@link #triangulate triangulate} the faces, but
- * it should be noted that this may result in triangles which are very small or
- * thin and hence difficult to perform reliable convexity tests on. In other
- * words, triangulating a merged face is likely to restore the numerical
- * problems which the merging process removed. Hence is it possible that, after
- * triangulation, {@link #check check} will fail (the same behavior is observed
- * with triangulated output from <a href=http://www.qhull.org>qhull</a>).
+ * desired, the application may triangulate the faces, but it should be noted
+ * that this may result in triangles which are very small or thin and hence
+ * difficult to perform reliable convexity tests on. In other words,
+ * triangulating a merged face is likely to restore the numerical problems which
+ * the merging process removed. Hence is it possible that, after triangulation,
+ * check will fail (the same behavior is observed with triangulated output from
+ * <a href=http://www.qhull.org>qhull</a>).
  * 
  * <h3>Degenerate Input</h3>It is assumed that the input points are
- * non-degenerate in that they are not coincident, colinear, or colplanar, and
+ * non-degenerate in that they are not coincident, colinear, or coplanar, and
  * thus the convex hull has a non-zero volume. If the input points are detected
- * to be degenerate within the {@link #getDistanceTolerance() distance
- * tolerance}, an IllegalArgumentException will be thrown.
+ * to be degenerate within the distance tolerance, an IllegalArgumentException
+ * will be thrown.
  * 
- * @author John E. Lloyd, Fall 2004
+ * author John E. Lloyd, Fall 2004
  * 
  * 
- *         Conversion to hemesh datatypes, Frederik Vanhoutte, 2013
+ * Conversion to hemesh datatypes, Frederik Vanhoutte, 2013
  * 
  * 
  */
@@ -131,15 +128,14 @@ public class WB_QuickHull3D {
 	private final Vertex[] maxVtxs = new Vertex[3];
 	private final Vertex[] minVtxs = new Vertex[3];
 
-	protected Vector faces = new Vector(16);
-	protected Vector horizon = new Vector(16);
+	protected Vector<Face> faces = new Vector<Face>(16);
+	protected Vector<HalfEdge> horizon = new Vector<HalfEdge>(16);
 
-	private final FastList<Face> newFaces = new FastList<Face>();
+	private final FastTable<Face> newFaces = new FastTable<Face>();
 	private final VertexList unclaimed = new VertexList();
 	private final VertexList claimed = new VertexList();
 
 	private int numVertices;
-	private int numFaces;
 	private int numPoints;
 
 	private double tolerance;
@@ -156,7 +152,7 @@ public class WB_QuickHull3D {
 	 */
 	public WB_QuickHull3D(final Collection<? extends WB_Coordinate> points)
 			throws IllegalArgumentException {
-		this.points = new FastList<WB_Point>(points.size());
+		this.points = new FastTable<WB_Point>();
 		for (final WB_Coordinate point : points) {
 			this.points.add(new WB_Point(point));
 
@@ -166,7 +162,7 @@ public class WB_QuickHull3D {
 
 	public WB_QuickHull3D(final Collection<? extends WB_Coordinate> points,
 			final boolean triangulate) throws IllegalArgumentException {
-		this.points = new FastList<WB_Point>(points.size());
+		this.points = new FastTable<WB_Point>();
 		for (final WB_Coordinate point : points) {
 			this.points.add(new WB_Point(point));
 
@@ -177,7 +173,7 @@ public class WB_QuickHull3D {
 	public WB_QuickHull3D(final WB_Coordinate[] points)
 			throws IllegalArgumentException {
 
-		this.points = new FastList<WB_Point>(points.length);
+		this.points = new FastTable<WB_Point>();
 		for (final WB_Coordinate point : points) {
 			this.points.add(new WB_Point(point));
 
@@ -187,7 +183,7 @@ public class WB_QuickHull3D {
 
 	public WB_QuickHull3D(final WB_Coordinate[] points,
 			final boolean triangulate) throws IllegalArgumentException {
-		this.points = new FastList<WB_Point>(points.length);
+		this.points = new FastTable<WB_Point>();
 		for (final WB_Coordinate point : points) {
 			this.points.add(new WB_Point(point));
 
@@ -216,7 +212,6 @@ public class WB_QuickHull3D {
 		vertexPointIndices = new int[nump];
 		faces.clear();
 		claimed.clear();
-		numFaces = 0;
 		numPoints = nump;
 	}
 
@@ -265,7 +260,7 @@ public class WB_QuickHull3D {
 	public void triangulate() {
 		final double minArea = charLength * 2.2204460492503131e-13;
 		newFaces.clear();
-		for (final Iterator it = faces.iterator(); it.hasNext();) {
+		for (final Iterator<Face> it = faces.iterator(); it.hasNext();) {
 			final Face face = (Face) it.next();
 			if (face.mark == Face.VISIBLE) {
 				face.triangulate(newFaces, minArea);
@@ -341,7 +336,7 @@ public class WB_QuickHull3D {
 	protected void createInitialSimplex() throws IllegalArgumentException {
 		double max = 0;
 		int imax = 0;
-		final long st = System.currentTimeMillis();
+
 		for (int i = 0; i < 3; i++) {
 			final double diff = maxVtxs[i].pos.getd(i) - minVtxs[i].pos.getd(i);
 			if (diff > max) {
@@ -408,8 +403,7 @@ public class WB_QuickHull3D {
 			throw new IllegalArgumentException(
 					"Input points appear to be coplanar");
 		}
-		final long et = System.currentTimeMillis();
-		// System.out.println((et - st));
+
 		final Face[] tris = new Face[4];
 
 		if (nrml.dot(vtx[3].pos) - d0 < 0) {
@@ -476,11 +470,9 @@ public class WB_QuickHull3D {
 	 * Returns the vertex points in this hull.
 	 * 
 	 * @return array of vertex points
-	 * @see WB_QuickHull3D#getVertices(double[])
-	 * @see WB_QuickHull3D#getFaces()
 	 */
 	public List<WB_Point> getVertices() {
-		final List<WB_Point> vtxs = new FastList<WB_Point>(numVertices);
+		final List<WB_Point> vtxs = new FastTable<WB_Point>();
 		for (int i = 0; i < numVertices; i++) {
 			vtxs.add(points.get(vertexPointIndices[i]));
 		}
@@ -513,7 +505,7 @@ public class WB_QuickHull3D {
 	public int[][] getFaces() {
 		final int[][] allFaces = new int[faces.size()][];
 		int k = 0;
-		for (final Iterator it = faces.iterator(); it.hasNext();) {
+		for (final Iterator<Face> it = faces.iterator(); it.hasNext();) {
 			final Face face = (Face) it.next();
 			allFaces[k] = new int[face.numVertices()];
 			getFaceIndices(allFaces[k], face);
@@ -593,8 +585,6 @@ public class WB_QuickHull3D {
 		do {
 			final Face oppFace = hedge.oppositeFace();
 			boolean merge = false;
-			double dist1;
-			final double dist2;
 
 			if (mergeType == NONCONVEX) { // then merge faces if they are
 											// definitively non-convex
@@ -607,7 +597,7 @@ public class WB_QuickHull3D {
 				// wrt to the larger face; otherwise, just mark
 				// the face non-convex for the second pass.
 				if (face.area > oppFace.area) {
-					if ((dist1 = oppFaceDistance(hedge)) > -tolerance) {
+					if ((oppFaceDistance(hedge)) > -tolerance) {
 						merge = true;
 					} else if (oppFaceDistance(hedge.opposite) > -tolerance) {
 						convex = false;
@@ -640,7 +630,7 @@ public class WB_QuickHull3D {
 
 	protected void calculateHorizon(final double eyePntx, final double eyePnty,
 			final double eyePntz, HalfEdge edge0, final Face face,
-			final Vector horizon) {
+			final Vector<HalfEdge> horizon) {
 		deleteFacePoints(face, null);
 		face.mark = Face.DELETED;
 
@@ -674,13 +664,13 @@ public class WB_QuickHull3D {
 	}
 
 	protected void addNewFaces(final List<Face> newFaces, final Vertex eyeVtx,
-			final Vector horizon) {
+			final Vector<HalfEdge> horizon) {
 		newFaces.clear();
 
 		HalfEdge hedgeSidePrev = null;
 		HalfEdge hedgeSideBegin = null;
 
-		for (final Iterator it = horizon.iterator(); it.hasNext();) {
+		for (final Iterator<HalfEdge> it = horizon.iterator(); it.hasNext();) {
 			final HalfEdge horizonHe = (HalfEdge) it.next();
 			final HalfEdge hedgeSide = addAdjoiningFace(eyeVtx, horizonHe);
 
@@ -748,7 +738,7 @@ public class WB_QuickHull3D {
 	}
 
 	protected void buildHull() {
-		int cnt = 0;
+
 		Vertex eyeVtx;
 
 		computeMaxAndMin();
@@ -757,7 +747,6 @@ public class WB_QuickHull3D {
 
 		while ((eyeVtx = nextPointToAdd()) != null) {
 			addPointToHull(eyeVtx);
-			cnt++;
 
 		}
 
@@ -782,14 +771,14 @@ public class WB_QuickHull3D {
 			p.hullindex = -1;
 		}
 		// remove inactive faces and mark active vertices
-		numFaces = 0;
-		for (final Iterator it = faces.iterator(); it.hasNext();) {
+
+		for (final Iterator<Face> it = faces.iterator(); it.hasNext();) {
 			final Face face = (Face) it.next();
 			if (face.mark != Face.VISIBLE) {
 				it.remove();
 			} else {
 				markFaceVertices(face);
-				numFaces++;
+
 			}
 		}
 		// reindex vertices
@@ -1008,7 +997,7 @@ public class WB_QuickHull3D {
 			return face;
 		}
 
-		protected static Face create(final FastList<Vertex> vtxArray,
+		protected static Face create(final FastTable<Vertex> vtxArray,
 				final int[] indices) {
 			final Face face = new Face();
 			HalfEdge hePrev = null;
@@ -1310,30 +1299,6 @@ public class WB_QuickHull3D {
 			return numDiscarded;
 		}
 
-		private double areaSquared(final HalfEdge hedge0, final HalfEdge hedge1) {
-			// return the squared area of the triangle defined
-			// by the half edge hedge0 and the point at the
-			// head of hedge1.
-
-			final Vertex p0 = hedge0.tail();
-			final Vertex p1 = hedge0.head();
-			final Vertex p2 = hedge1.head();
-
-			final double dx1 = p1.pos.xd() - p0.pos.xd();
-			final double dy1 = p1.pos.yd() - p0.pos.yd();
-			final double dz1 = p1.pos.zd() - p0.pos.zd();
-
-			final double dx2 = p2.pos.xd() - p0.pos.xd();
-			final double dy2 = p2.pos.yd() - p0.pos.yd();
-			final double dz2 = p2.pos.zd() - p0.pos.zd();
-
-			final double x = dy1 * dz2 - dz1 * dy2;
-			final double y = dz1 * dx2 - dx1 * dz2;
-			final double z = dx1 * dy2 - dy1 * dx2;
-
-			return x * x + y * y + z * z;
-		}
-
 		protected void triangulate(final List<Face> newFaces,
 				final double minArea) {
 			HalfEdge hedge;
@@ -1343,7 +1308,6 @@ public class WB_QuickHull3D {
 			}
 
 			final Vertex v0 = he0.head();
-			final Face prevFace = null;
 
 			hedge = he0.next;
 			HalfEdge oppPrev = hedge.opposite;
@@ -1543,7 +1507,7 @@ public class WB_QuickHull3D {
 		protected double length() {
 			if (tail() != null) {
 
-				return WB_Distance3D.distance(head().pos, tail().pos);
+				return WB_Distance.getDistance3D(head().pos, tail().pos);
 			} else {
 				return -1;
 			}
@@ -1556,7 +1520,7 @@ public class WB_QuickHull3D {
 		 */
 		protected double lengthSquared() {
 			if (tail() != null) {
-				return WB_Distance3D.sqDistance(head().pos, tail().pos);
+				return WB_Distance.getSqDistance3D(head().pos, tail().pos);
 			} else {
 				return -1;
 			}
@@ -1667,6 +1631,11 @@ public class WB_QuickHull3D {
 	}
 
 	protected static class InternalErrorException extends RuntimeException {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4257980575065868777L;
+
 		protected InternalErrorException(final String msg) {
 			super(msg);
 		}

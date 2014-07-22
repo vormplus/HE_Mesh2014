@@ -2,18 +2,16 @@ package wblut.hemesh;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
-import wblut.geom.WB_AABB;
 import wblut.geom.WB_KDTree;
 import wblut.geom.WB_KDTree.WB_KDEntry;
 import wblut.geom.WB_Point;
 
 /**
  * Creates the Voronoi cells of a collection of points, constrained by a mesh.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
@@ -44,24 +42,20 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 	/** Create divided skin of container. */
 	private boolean createSkin;
 
-	/** Use dummy for neighbor resolution?. */
-	private boolean useDummy;
-
 	/** The limit. */
 	public int limit;
 
 	/**
 	 * Instantiates a new HEMC_VoronoiCells.
-	 * 
+	 *
 	 */
 	public HEMC_VoronoiCells() {
 		super();
-		useDummy = false;
 	}
 
 	/**
 	 * Set mesh, defines both points and container.
-	 * 
+	 *
 	 * @param mesh
 	 *            HE_Mesh
 	 * @param addCenter
@@ -76,7 +70,8 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 				points[i] = tmp[i];
 			}
 			points[mesh.getNumberOfVertices()] = mesh.getCenter();
-		} else {
+		}
+		else {
 			points = mesh.getVerticesAsPoint();
 		}
 		container = mesh;
@@ -85,7 +80,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set points that define cell centers.
-	 * 
+	 *
 	 * @param points
 	 *            array of vertex positions
 	 * @return self
@@ -97,7 +92,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set points that define cell centers.
-	 * 
+	 *
 	 * @param points
 	 *            collection of vertex positions
 	 * @return self
@@ -117,7 +112,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set points that define cell centers.
-	 * 
+	 *
 	 * @param points
 	 *            2D array of double of vertex positions
 	 * @return self
@@ -136,7 +131,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set points that define cell centers.
-	 * 
+	 *
 	 * @param points
 	 *            2D array of float of vertex positions
 	 * @return self
@@ -155,7 +150,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set number of points.
-	 * 
+	 *
 	 * @param N
 	 *            number of points
 	 * @return self
@@ -167,7 +162,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set voronoi cell offset.
-	 * 
+	 *
 	 * @param o
 	 *            offset
 	 * @return self
@@ -179,7 +174,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set enclosing mesh limiting cells.
-	 * 
+	 *
 	 * @param container
 	 *            enclosing mesh
 	 * @return self
@@ -191,7 +186,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Set optional surface mesh mode.
-	 * 
+	 *
 	 * @param b
 	 *            true, false
 	 * @return self
@@ -203,7 +198,7 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Sets the simple cap.
-	 * 
+	 *
 	 * @param b
 	 *            the b
 	 * @return the hEM c_ voronoi cells
@@ -215,25 +210,13 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 
 	/**
 	 * Create skin mesh?.
-	 * 
+	 *
 	 * @param b
 	 *            true, false
 	 * @return self
 	 */
 	public HEMC_VoronoiCells setCreateSkin(final boolean b) {
 		createSkin = b;
-		return this;
-	}
-
-	/**
-	 * Use dummy mesh for fast neighbor resolution?.
-	 * 
-	 * @param b
-	 *            true, false
-	 * @return self
-	 */
-	public HEMC_VoronoiCells setUseDummy(final boolean b) {
-		useDummy = b;
 		return this;
 	}
 
@@ -260,15 +243,13 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 		if (numberOfPoints == 0) {
 			numberOfPoints = points.length;
 		}
-		if (useDummy) {
-			return createWithDummy();
-		}
+
 		final ArrayList<HE_Mesh> lresult = new ArrayList<HE_Mesh>();
 		final ArrayList<HE_Selection> linnersel = new ArrayList<HE_Selection>();
 		final ArrayList<HE_Selection> loutersel = new ArrayList<HE_Selection>();
 		final HEC_VoronoiCell cvc = new HEC_VoronoiCell();
 		cvc.setPoints(points).setN(numberOfPoints).setContainer(container)
-				.setSurface(surface).setOffset(offset).setSimpleCap(simpleCap);
+		.setSurface(surface).setOffset(offset).setSimpleCap(simpleCap);
 		if (limit > 0) {
 			final WB_KDTree<WB_Point, Integer> tree = new WB_KDTree<WB_Point, Integer>();
 			for (int i = 0; i < numberOfPoints; i++) {
@@ -294,7 +275,8 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 				lresult.add(mesh);
 			}
 
-		} else {
+		}
+		else {
 			for (int i = 0; i < numberOfPoints; i++) {
 				cvc.setCellIndex(i);
 				System.out.println("HEMC_VoronoiCells: creating cell "
@@ -324,93 +306,10 @@ public class HEMC_VoronoiCells extends HEMC_MultiCreator {
 			}
 
 			result[_numberOfMeshes] = new HE_Mesh(new HEC_FromVoronoiCells()
-					.setActive(on).setCells(result));
+			.setActive(on).setCells(result));
 		}
 		return result;
-	}
 
-	/**
-	 * Creates the with dummy.
-	 * 
-	 * @return the h e_ mesh[]
-	 */
-	public HE_Mesh[] createWithDummy() {
-		final WB_AABB AABB = new WB_AABB(points);
-		final WB_AABB meshAABB = container.getAABB();
-		AABB.getMin().x = Math.min(AABB.getMin().x, meshAABB.getMin().x);
-		AABB.getMin().y = Math.min(AABB.getMin().y, meshAABB.getMin().y);
-		AABB.getMin().z = Math.min(AABB.getMin().z, meshAABB.getMin().z);
-		AABB.getMax().x = Math.max(AABB.getMax().x, meshAABB.getMax().x);
-		AABB.getMax().y = Math.max(AABB.getMax().y, meshAABB.getMax().y);
-		AABB.getMax().z = Math.max(AABB.getMax().z, meshAABB.getMax().z);
-
-		final HE_Mesh dummy = new HE_Mesh(new HEC_Box().setFromAABB(AABB, 20));
-		HE_Mesh[] result;
-
-		final ArrayList<HE_Mesh> lresult = new ArrayList<HE_Mesh>();
-		final ArrayList<HE_Selection> linnersel = new ArrayList<HE_Selection>();
-		final ArrayList<HE_Selection> loutersel = new ArrayList<HE_Selection>();
-		final HEC_VoronoiCell cvc = new HEC_VoronoiCell();
-		cvc.setPoints(points).setN(numberOfPoints).setContainer(container)
-				.setSurface(surface).setOffset(offset).setSimpleCap(simpleCap);
-
-		final HEC_VoronoiCell dvc = new HEC_VoronoiCell();
-		dvc.setPoints(points).setN(numberOfPoints).setContainer(dummy)
-				.setSurface(surface).setOffset(offset).setSimpleCap(true);
-
-		HE_Mesh mesh;
-		for (int i = 0; i < numberOfPoints; i++) {
-			cvc.setCellIndex(i);
-			dvc.setCellIndex(i);
-			System.out.println("HEMC_VoronoiCells: creating cell " + (i + 1)
-					+ " of " + numberOfPoints + ".");
-
-			mesh = dvc.createBase();
-			final ArrayList<Integer> indicesToUse = new ArrayList<Integer>(
-					mesh.getNumberOfFaces());
-			final Iterator<HE_Face> fItr = mesh.fItr();
-			while (fItr.hasNext()) {
-				final int j = fItr.next().getLabel();
-				if (j > -1) {
-					indicesToUse.add(j);
-				}
-			}
-			if (mesh.getNumberOfFaces() == 0) {
-				mesh = new HE_Mesh();
-				linnersel.add(new HE_Selection(mesh));
-				loutersel.add(new HE_Selection(mesh));
-			} else {
-				cvc.setLimitPoints(true).setPointsToUse(indicesToUse);
-				mesh = cvc.createBase();
-				linnersel.add(cvc.inner);
-				loutersel.add(cvc.outer);
-			}
-			lresult.add(mesh);
-		}
-		result = new HE_Mesh[lresult.size()];
-		inner = new HE_Selection[lresult.size()];
-		outer = new HE_Selection[lresult.size()];
-		_numberOfMeshes = lresult.size();
-		for (int i = 0; i < _numberOfMeshes; i++) {
-			result[i] = lresult.get(i);
-			inner[i] = linnersel.get(i);
-			outer[i] = loutersel.get(i);
-		}
-
-		if (createSkin) {
-			final boolean[] on = new boolean[_numberOfMeshes];
-			for (int i = 0; i < _numberOfMeshes; i++) {
-				on[i] = true;
-			}
-
-			final HE_Mesh[] temp = new HE_Mesh[result.length + 1];
-			System.arraycopy(result, 0, temp, 0, result.length);
-			temp[result.length] = new HE_Mesh(new HEC_FromVoronoiCells()
-					.setActive(on).setCells(result));
-			result = temp;
-		}
-
-		return result;
 	}
 
 }

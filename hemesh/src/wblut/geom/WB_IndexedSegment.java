@@ -2,11 +2,12 @@ package wblut.geom;
 
 import java.util.List;
 
-import javolution.util.FastList;
+import javolution.util.FastTable;
+import wblut.geom.interfaces.Segment;
 import wblut.math.WB_Math;
 
 public class WB_IndexedSegment extends WB_Linear implements Segment {
-
+	private static WB_GeometryFactory gf = WB_GeometryFactory.instance();
 	private int i1;
 
 	private int i2;
@@ -20,17 +21,17 @@ public class WB_IndexedSegment extends WB_Linear implements Segment {
 		this.i1 = i1;
 		this.i2 = i2;
 		this.points = points;
-		length = WB_Distance3D.distance(points[i1], points[i2]);
+		length = WB_Distance.getDistance3D(points[i1], points[i2]);
 	}
 
-	public WB_Point getParametricPoint(final double t) {
+	public WB_Point getParametricPointOnSegment(final double t) {
 		final WB_Point result = new WB_Point(direction);
 		result._scaleSelf(WB_Math.clamp(t, 0, 1) * length);
 		result.moveBy(points[i1]);
 		return result;
 	}
 
-	public void getParametricPointInto(final double t,
+	public void getParametricPointOnSegmentInto(final double t,
 			final WB_MutableCoordinate result) {
 		result._set(direction.mul(WB_Math.clamp(t, 0, 1) * length)._addSelf(
 				points[i1]));
@@ -38,7 +39,7 @@ public class WB_IndexedSegment extends WB_Linear implements Segment {
 	}
 
 	public WB_Point getCenter() {
-		return WB_Point.interpolate(points[i1], points[i2], 0.5);
+		return gf.createMidpoint(points[i1], points[i2]);
 	}
 
 	public WB_Point getEndpoint() {
@@ -68,7 +69,7 @@ public class WB_IndexedSegment extends WB_Linear implements Segment {
 
 	public static List<WB_IndexedSegment> negate(
 			final List<WB_IndexedSegment> segs) {
-		final List<WB_IndexedSegment> neg = new FastList<WB_IndexedSegment>();
+		final List<WB_IndexedSegment> neg = new FastTable<WB_IndexedSegment>();
 		for (int i = 0; i < segs.size(); i++) {
 			neg.add(segs.get(i).negate());
 		}

@@ -2,8 +2,7 @@ package wblut.hemesh;
 
 import java.util.Iterator;
 
-public class HE_VertexHalfedgeOutCirculator<V extends HE_Vertex> implements
-		Iterator<HE_Halfedge> {
+public class HE_VertexHalfedgeOutCirculator implements Iterator<HE_Halfedge> {
 
 	private HE_Halfedge _start;
 	private HE_Halfedge _current;
@@ -16,8 +15,10 @@ public class HE_VertexHalfedgeOutCirculator<V extends HE_Vertex> implements
 
 	@Override
 	public boolean hasNext() {
-
-		return (_current == null) || (_current.getNextInVertex() != _start);
+		if (_start == null)
+			return false;
+		return ((_current == null) || (_current.getNextInVertex() != _start))
+				&& (_start != null);
 	}
 
 	@Override

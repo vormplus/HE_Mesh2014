@@ -5,6 +5,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javolution.context.LogContext;
+import javolution.context.LogContext.Level;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_SimplePolygon;
 import wblut.geom.WB_Vector;
@@ -27,6 +29,7 @@ public class HEM_Lattice extends HEM_Modifier {
 
 	public HEM_Lattice() {
 		super();
+		LogContext.enter().setLevel(Level.INFO);
 		d = 0;
 		sew = 0;
 		thresholdAngle = -1;
@@ -57,7 +60,7 @@ public class HEM_Lattice extends HEM_Modifier {
 		return this;
 	}
 
-	public HEM_Lattice setBulge(final double inner, double outer) {
+	public HEM_Lattice setBulge(final double inner, final double outer) {
 		ibulge = inner;
 		obulge = outer;
 		return this;
@@ -172,8 +175,8 @@ public class HEM_Lattice extends HEM_Modifier {
 					heoc = heo.get(j);
 					heon = heo.get((j + 1) % nvo);
 
-					final int cic = poly.closestIndex(heoc.getVertex().pos);
-					final int cin = poly.closestIndex(heon.getVertex().pos);
+					final int cic = poly.closestIndex(heoc.getVertex());
+					final int cin = poly.closestIndex(heon.getVertex());
 					heic = hei.get(cin);
 
 					hein = hei.get(cic);
@@ -187,7 +190,8 @@ public class HEM_Lattice extends HEM_Modifier {
 					if (cic == cin) {
 						heoi.setNext(heio);
 						heoi.setFace(fNew);
-					} else {
+					}
+					else {
 						heoi.setNext(heic);
 						heoi.setFace(fNew);
 						heic.setNext(heio);
@@ -233,7 +237,7 @@ public class HEM_Lattice extends HEM_Modifier {
 
 		}
 
-		mesh.pairHalfedges();
+		mesh.pairHalfedgesAndCreateEdges();
 
 		return mesh;
 
@@ -320,8 +324,8 @@ public class HEM_Lattice extends HEM_Modifier {
 					heoc = heo.get(j);
 					heon = heo.get((j + 1) % nvo);
 
-					final int cic = poly.closestIndex(heoc.getVertex().pos);
-					final int cin = poly.closestIndex(heon.getVertex().pos);
+					final int cic = poly.closestIndex(heoc.getVertex());
+					final int cin = poly.closestIndex(heon.getVertex());
 					heic = hei.get(cin);
 
 					hein = hei.get(cic);
@@ -335,7 +339,8 @@ public class HEM_Lattice extends HEM_Modifier {
 					if (cic == cin) {
 						heoi.setNext(heio);
 						heoi.setFace(fNew);
-					} else {
+					}
+					else {
 						heoi.setNext(heic);
 						heoi.setFace(fNew);
 						heic.setNext(heio);
@@ -354,7 +359,7 @@ public class HEM_Lattice extends HEM_Modifier {
 
 			}
 		}
-		selection.parent.pairHalfedges();
+		selection.parent.pairHalfedgesAndCreateEdges();
 
 		return selection.parent;
 	}

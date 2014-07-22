@@ -2,9 +2,9 @@ package wblut.hemesh;
 
 import java.util.Collection;
 
-import javolution.util.FastList;
-import wblut.geom.Triangle;
+import javolution.util.FastTable;
 import wblut.geom.WB_Point;
+import wblut.geom.interfaces.Triangle;
 
 /**
  * Creates a new mesh from a list of triangles. Duplicate vertices are fused.
@@ -13,10 +13,10 @@ import wblut.geom.WB_Point;
  *            the generic type
  * @author Frederik Vanhoutte (W:Blut)
  */
-public class HEC_FromTriangles<T extends Triangle> extends HEC_Creator {
+public class HEC_FromTriangles extends HEC_Creator {
 
 	/** Source triangles. */
-	FastList<T> triangles;
+	FastTable<Triangle> triangles;
 
 	/**
 	 * Instantiates a new HEC_FromTriangles.
@@ -34,9 +34,9 @@ public class HEC_FromTriangles<T extends Triangle> extends HEC_Creator {
 	 *            source triangles
 	 * @return self
 	 */
-	public HEC_FromTriangles setTriangles(final T[] ts) {
-		triangles = new FastList<T>();
-		for (final T tri : ts) {
+	public HEC_FromTriangles setTriangles(final Triangle[] ts) {
+		triangles = new FastTable<Triangle>();
+		for (final Triangle tri : ts) {
 			triangles.add(tri);
 		}
 		return this;
@@ -49,9 +49,10 @@ public class HEC_FromTriangles<T extends Triangle> extends HEC_Creator {
 	 *            source triangles
 	 * @return self
 	 */
-	public HEC_FromTriangles setTriangles(final Collection<T> ts) {
+	public HEC_FromTriangles setTriangles(
+			final Collection<? extends Triangle> ts) {
 
-		triangles = new FastList<T>();
+		triangles = new FastTable<Triangle>();
 		triangles.addAll(ts);
 		return this;
 	}

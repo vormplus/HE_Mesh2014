@@ -1,15 +1,16 @@
 package wblut.hemesh;
 
-import wblut.WB_Epsilon;
 import wblut.geom.WB_BSpline;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_Vector;
+import wblut.math.WB_Epsilon;
+import wblut.math.WB_Math;
 
 /**
  * Circle swept along curve.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 
 public class HEC_SweepTube extends HEC_Creator {
@@ -23,18 +24,13 @@ public class HEC_SweepTube extends HEC_Creator {
 	/** Steps along curve. */
 	private int steps;
 
-	/** The curve. */
+	/** Sweep curve. */
 	private WB_BSpline curve;
 
-	/** The topcap. */
 	private boolean topcap;
 
-	/** The bottomcap. */
 	private boolean bottomcap;
 
-	/**
-	 * Instantiates a new hE c_ sweep tube.
-	 */
 	public HEC_SweepTube() {
 		super();
 		R = 0;
@@ -45,18 +41,6 @@ public class HEC_SweepTube extends HEC_Creator {
 		override = true;
 	}
 
-	/**
-	 * Instantiates a new hE c_ sweep tube.
-	 * 
-	 * @param R
-	 *            the r
-	 * @param facets
-	 *            the facets
-	 * @param steps
-	 *            the steps
-	 * @param curve
-	 *            the curve
-	 */
 	public HEC_SweepTube(final double R, final int facets, final int steps,
 			final WB_BSpline curve) {
 		this();
@@ -69,7 +53,7 @@ public class HEC_SweepTube extends HEC_Creator {
 
 	/**
 	 * Set fixed radius.
-	 * 
+	 *
 	 * @param R
 	 *            radius
 	 * @return self
@@ -81,7 +65,7 @@ public class HEC_SweepTube extends HEC_Creator {
 
 	/**
 	 * Set vertical divisions.
-	 * 
+	 *
 	 * @param steps
 	 *            vertical divisions
 	 * @return self
@@ -93,7 +77,7 @@ public class HEC_SweepTube extends HEC_Creator {
 
 	/**
 	 * Set number of sides.
-	 * 
+	 *
 	 * @param facets
 	 *            number of sides
 	 * @return self
@@ -105,7 +89,7 @@ public class HEC_SweepTube extends HEC_Creator {
 
 	/**
 	 * Set capping options.
-	 * 
+	 *
 	 * @param topcap
 	 *            create top cap?
 	 * @param bottomcap
@@ -118,13 +102,6 @@ public class HEC_SweepTube extends HEC_Creator {
 		return this;
 	}
 
-	/**
-	 * Sets the curve.
-	 * 
-	 * @param curve
-	 *            the curve
-	 * @return the hE c_ sweep tube
-	 */
 	public HEC_SweepTube setCurve(final WB_BSpline curve) {
 		this.curve = curve;
 		return this;
@@ -132,7 +109,7 @@ public class HEC_SweepTube extends HEC_Creator {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Creator#create()
 	 */
 	@Override
@@ -152,7 +129,6 @@ public class HEC_SweepTube extends HEC_Creator {
 		WB_Point onCurve;
 		WB_Vector deriv;
 		WB_Vector oldderiv = new WB_Vector(0, 0, 1);
-		final WB_Vector Z = new WB_Vector(0, 0, 1);
 		final WB_Point origin = new WB_Point(0, 0, 0);
 		for (int i = 0; i < steps + 1; i++) {
 			onCurve = curve.curvePoint(i * ds);
@@ -167,11 +143,13 @@ public class HEC_SweepTube extends HEC_Creator {
 							onCurve));
 				}
 				deriv._normalizeSelf();
-			} else {
+			}
+			else {
 				deriv = curve.curveFirstDeriv(i * ds);
 			}
 			final WB_Vector axis = oldderiv.cross(deriv);
-			final double angle = Math.acos(oldderiv.dot(deriv));
+			final double angle = Math.acos(WB_Math.clamp(oldderiv.dot(deriv),
+					-1, 1));
 			for (int j = 0; j < facets; j++) {
 				if (!WB_Epsilon.isZeroSq(axis.getSqLength())) {
 					basevertices[j].rotateAboutAxis(angle, origin, axis);

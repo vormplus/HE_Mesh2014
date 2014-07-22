@@ -1,5 +1,6 @@
 package wblut.math;
 
+
 public class WB_SpatialParameter3D<T> implements WB_Parameter<T> {
 
 	WB_Function3D<T> value;

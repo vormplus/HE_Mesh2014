@@ -3,55 +3,50 @@ package wblut.hemesh;
 import java.util.HashMap;
 import java.util.List;
 
-import javolution.util.FastList;
+import javolution.util.FastTable;
 import wblut.geom.WB_Convex;
 import wblut.geom.WB_Coordinate;
-import wblut.geom.WB_IndexedTriangle2D;
+import wblut.geom.WB_HasColor;
+import wblut.geom.WB_HasData;
 import wblut.geom.WB_Plane;
 import wblut.geom.WB_Point;
+import wblut.geom.WB_Projection;
 import wblut.geom.WB_SimplePolygon;
-import wblut.geom.WB_SimplePolygon2D;
 import wblut.geom.WB_Vector;
 import wblut.math.WB_Math;
 
 /**
  * Face element of half-edge data structure.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
-public class HE_Face extends HE_Element implements WB_HasData {
+public class HE_Face extends HE_Element implements WB_HasData, WB_HasColor {
 
 	/** Halfedge associated with this face. */
 	private HE_Halfedge _halfedge;
 
-	/** Status of sorting. */
-	protected boolean _sorted;
+	private boolean _sorted;
 
-	/** The _data. */
 	private HashMap<String, Object> _data;
+
+	private int facecolor;
+
+	private int[][] triangles;
 
 	/**
 	 * Instantiates a new HE_Face.
 	 */
 	public HE_Face() {
+
 		super();
+		facecolor = -1;
 	}
 
-	/**
-	 * Get key.
-	 * 
-	 * @return key
-	 */
-	public Long key() {
+	public long key() {
 		return super.getKey();
 	}
 
-	/**
-	 * Get face center.
-	 * 
-	 * @return center
-	 */
 	public WB_Point getFaceCenter() {
 		if (_halfedge == null) {
 			return null;
@@ -68,11 +63,22 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		return _center;
 	}
 
-	/**
-	 * Get face normal. Returns stored value if update status is true.
-	 * 
-	 * @return normal
-	 */
+	public WB_Point getFaceCenter(final double d) {
+		if (_halfedge == null) {
+			return null;
+		}
+		HE_Halfedge he = _halfedge;
+		final WB_Point _center = new WB_Point();
+		int c = 0;
+		do {
+			_center._addSelf(he.getVertex());
+			c++;
+			he = he.getNextInFace();
+		} while (he != _halfedge);
+		_center._divSelf(c)._addMulSelf(d, getFaceNormal());
+		return _center;
+	}
+
 	public WB_Vector getFaceNormal() {
 		if (_halfedge == null) {
 			return null;
@@ -86,9 +92,9 @@ public class HE_Face extends HE_Element implements WB_HasData {
 			p0 = he.getVertex();
 			p1 = he.getNextInFace().getVertex();
 
-			_normal.x += (p0.yd() - p1.yd()) * (p0.zd() + p1.zd());
-			_normal.y += (p0.zd() - p1.zd()) * (p0.xd() + p1.xd());
-			_normal.z += (p0.xd() - p1.xd()) * (p0.yd() + p1.yd());
+			_normal._addSelf((p0.yd() - p1.yd()) * (p0.zd() + p1.zd()),
+					(p0.zd() - p1.zd()) * (p0.xd() + p1.xd()),
+					(p0.xd() - p1.xd()) * (p0.yd() + p1.yd()));
 
 			he = he.getNextInFace();
 		} while (he != _halfedge);
@@ -96,11 +102,28 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		return _normal;
 	}
 
-	/**
-	 * Get face area.
-	 * 
-	 * @return area
-	 */
+	public WB_Vector getFaceNormalNN() {
+		if (_halfedge == null) {
+			return null;
+		}
+		// calculate normal with Newell's method
+		HE_Halfedge he = _halfedge;
+		final WB_Vector _normal = new WB_Vector();
+		HE_Vertex p0;
+		HE_Vertex p1;
+		do {
+			p0 = he.getVertex();
+			p1 = he.getNextInFace().getVertex();
+
+			_normal._addSelf((p0.yd() - p1.yd()) * (p0.zd() + p1.zd()),
+					(p0.zd() - p1.zd()) * (p0.xd() + p1.xd()),
+					(p0.xd() - p1.xd()) * (p0.yd() + p1.yd()));
+
+			he = he.getNextInFace();
+		} while (he != _halfedge);
+		return _normal;
+	}
+
 	public double getFaceArea() {
 		if (_halfedge == null) {
 			return Double.NaN;
@@ -113,7 +136,8 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		int coord = 3;
 		if (x >= y && x >= z) {
 			coord = 1;
-		} else if (y >= x && y >= z) {
+		}
+		else if (y >= x && y >= z) {
 			coord = 2;
 		}
 		HE_Halfedge he = _halfedge;
@@ -151,11 +175,6 @@ public class HE_Face extends HE_Element implements WB_HasData {
 
 	}
 
-	/**
-	 * Get face type.
-	 * 
-	 * @return WB_PolygonType2D.CONVEX, WB_PolygonType2D.CONCAVE
-	 */
 	public WB_Convex getFaceType() {
 		if (_halfedge == null) {
 			return null;
@@ -171,16 +190,11 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		return WB_Convex.CONVEX;
 	}
 
-	/**
-	 * Get vertices of face as arraylist of HE_Vertex.
-	 * 
-	 * @return vertices
-	 */
 	public List<HE_Vertex> getFaceVertices() {
 		if (!_sorted) {
 			sort();
 		}
-		final List<HE_Vertex> fv = new FastList<HE_Vertex>();
+		final List<HE_Vertex> fv = new FastTable<HE_Vertex>();
 		if (_halfedge == null) {
 			return fv;
 		}
@@ -197,11 +211,6 @@ public class HE_Face extends HE_Element implements WB_HasData {
 
 	}
 
-	/**
-	 * Get number of vertices in face.
-	 * 
-	 * @return number of vertices
-	 */
 	public int getFaceOrder() {
 
 		int result = 0;
@@ -219,17 +228,11 @@ public class HE_Face extends HE_Element implements WB_HasData {
 
 	}
 
-	/**
-	 * Get halfedges of face as arraylist of HE_Halfedge. The halfedge of the
-	 * leftmost vertex is returned first.
-	 * 
-	 * @return halfedges
-	 */
 	public List<HE_Halfedge> getFaceHalfedges() {
 		if (!_sorted) {
 			sort();
 		}
-		final List<HE_Halfedge> fhe = new FastList<HE_Halfedge>();
+		final List<HE_Halfedge> fhe = new FastTable<HE_Halfedge>();
 		if (_halfedge == null) {
 			return fhe;
 		}
@@ -246,17 +249,11 @@ public class HE_Face extends HE_Element implements WB_HasData {
 
 	}
 
-	/**
-	 * Get edges of face as arraylist of HE_Edge. The edge of the leftmost
-	 * vertex is returned first.
-	 * 
-	 * @return edges
-	 */
 	public List<HE_Edge> getFaceEdges() {
 		if (!_sorted) {
 			sort();
 		}
-		final List<HE_Edge> fe = new FastList<HE_Edge>();
+		final List<HE_Edge> fe = new FastTable<HE_Edge>();
 		if (_halfedge == null) {
 			return fe;
 		}
@@ -273,68 +270,39 @@ public class HE_Face extends HE_Element implements WB_HasData {
 
 	}
 
-	/**
-	 * Get halfedge.
-	 * 
-	 * @return halfedge
-	 */
 	public HE_Halfedge getHalfedge() {
 		return _halfedge;
 	}
 
-	/**
-	 * Sets the halfedge.
-	 * 
-	 * @param halfedge
-	 *            the new halfedge
-	 */
 	public void setHalfedge(final HE_Halfedge halfedge) {
 		_halfedge = halfedge;
-		_sorted = false;
+		reset();
 	}
 
-	public void push(WB_Coordinate c) {
+	public void push(final WB_Coordinate c) {
 		HE_Halfedge he = _halfedge;
 
 		do {
-			he.getVertex().pos._addSelf(c);
+			he.getVertex().getPoint()._addSelf(c);
 
 			he = he.getNextInFace();
 		} while (he != _halfedge);
 	}
 
-	/**
-	 * Clear halfedge.
-	 */
 	public void clearHalfedge() {
 		_halfedge = null;
 		_sorted = false;
 	}
 
-	/**
-	 * Get plane of face.
-	 * 
-	 * @return plane
-	 */
 	public WB_Plane toPlane() {
 		return new WB_Plane(getFaceCenter(), getFaceNormal());
 	}
 
-	/**
-	 * Get plane of face.
-	 * 
-	 * @param d
-	 *            the d
-	 * @return plane
-	 */
 	public WB_Plane toPlane(final double d) {
 		final WB_Vector fn = getFaceNormal();
-		return new WB_Plane(getFaceCenter()._addSelf(d, fn), fn);
+		return new WB_Plane(getFaceCenter()._addMulSelf(d, fn), fn);
 	}
 
-	/**
-	 * Sort halfedges in lexicographic order.
-	 */
 	public void sort() {
 		if (_halfedge != null) {
 
@@ -351,21 +319,18 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		}
 	}
 
-	/**
-	 * Triangulate the face, returns indexed 2D triangles. The index refers to
-	 * the face vertices()
-	 * 
-	 * @return ArrayList of WB_IndexedTriangle
-	 */
-	public List<WB_IndexedTriangle2D> triangulate() {
-		return toPolygon2D().indexedTriangulate();
+	public int[][] getTriangles() {
+		if (triangles == null) {
+			triangles = toPolygon().triangulate();
+		}
+		return triangles;
 	}
 
-	/**
-	 * Get the face as a WB_Polygon2D.
-	 * 
-	 * @return face as WB_Polygon2D
-	 */
+	public void reset() {
+		triangles = null;
+		_sorted = false;
+	}
+
 	public WB_SimplePolygon toPolygon() {
 		final int n = getFaceOrder();
 		if (n == 0) {
@@ -390,27 +355,34 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		return new WB_SimplePolygon(points, n);
 	}
 
-	/**
-	 * Get the face as a WB_Polygon2D.
-	 * 
-	 * @return face as WB_Polygon2D
-	 */
-	public WB_SimplePolygon2D toPolygon2D() {
+	public WB_SimplePolygon toPlanarPolygon() {
+		final int n = getFaceOrder();
 
-		return toPolygon().toPolygon2D();
+		if (n == 0) {
+			return null;
+		}
+
+		final WB_Point[] points = new WB_Point[n];
+		if (!_sorted) {
+			sort();
+		}
+		final WB_Plane P = toPlane();
+		int i = 0;
+		HE_Halfedge he = _halfedge;
+		do {
+			points[i] = WB_Projection.projectOnPlane(he.getVertex(), P);
+			he = he.getNextInFace();
+			i++;
+		} while (he != _halfedge);
+
+		return new WB_SimplePolygon(points, n);
 	}
 
-	/**
-	 * Get neighboring faces as arraylist of HE_Face. The face of the leftmost
-	 * halfedge is returned first.
-	 * 
-	 * @return neighboring faces
-	 */
 	public List<HE_Face> getNeighborFaces() {
 		if (!isSorted()) {
 			sort();
 		}
-		final List<HE_Face> ff = new FastList<HE_Face>();
+		final List<HE_Face> ff = new FastTable<HE_Face>();
 		if (getHalfedge() == null) {
 			return ff;
 		}
@@ -450,11 +422,6 @@ public class HE_Face extends HE_Element implements WB_HasData {
 		return s;
 	}
 
-	/**
-	 * Checks if is sorted.
-	 * 
-	 * @return true, if is sorted
-	 */
 	public boolean isSorted() {
 		return _sorted;
 	}
@@ -464,6 +431,7 @@ public class HE_Face extends HE_Element implements WB_HasData {
 	 * 
 	 * @see wblut.core.WB_HasData#setData(java.lang.String, java.lang.Object)
 	 */
+	@Override
 	public void setData(final String s, final Object o) {
 		if (_data == null) {
 			_data = new HashMap<String, Object>();
@@ -476,8 +444,38 @@ public class HE_Face extends HE_Element implements WB_HasData {
 	 * 
 	 * @see wblut.core.WB_HasData#getData(java.lang.String)
 	 */
+	@Override
 	public Object getData(final String s) {
 		return _data.get(s);
+	}
+
+	@Override
+	public int getColor() {
+
+		return facecolor;
+	}
+
+	@Override
+	public void setColor(final int color) {
+		facecolor = color;
+
+	}
+
+	/**
+	 * Checks if is boundary.
+	 *
+	 * @return true, if is boundary
+	 */
+	public boolean isBoundary() {
+		HE_Halfedge he = _halfedge;
+		do {
+			if (he.getPair().getFace() == null) {
+				return true;
+			}
+			he = he.getNextInFace();
+		} while (he != _halfedge);
+		return false;
+
 	}
 
 }

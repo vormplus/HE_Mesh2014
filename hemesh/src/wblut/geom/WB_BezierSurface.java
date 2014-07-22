@@ -2,9 +2,10 @@ package wblut.geom;
 
 import wblut.hemesh.HEC_FromFacelist;
 import wblut.hemesh.HE_Mesh;
+import wblut.math.WB_Bernstein;
 
 public class WB_BezierSurface implements WB_Surface {
-
+	private static WB_GeometryFactory gf = WB_GeometryFactory.instance();
 	protected WB_Point[][] points;
 
 	protected int n;
@@ -45,29 +46,29 @@ public class WB_BezierSurface implements WB_Surface {
 			final WB_Point[] Q = new WB_Point[m + 1];
 			double[] B;
 			for (int j = 0; j <= m; j++) {
-				B = WB_Bezier.allBernstein(u, n);
+				B = WB_Bernstein.getBernsteinCoefficientsOfOrderN(u, n);
 				Q[j] = new WB_Point();
 				for (int k = 0; k <= n; k++) {
-					Q[j]._addSelf(B[k], points[k][j]);
+					Q[j]._addMulSelf(B[k], points[k][j]);
 				}
 			}
-			B = WB_Bezier.allBernstein(v, m);
+			B = WB_Bernstein.getBernsteinCoefficientsOfOrderN(v, m);
 			for (int k = 0; k <= m; k++) {
-				S._addSelf(B[k], Q[k]);
+				S._addMulSelf(B[k], Q[k]);
 			}
 		} else {
 			final WB_Point[] Q = new WB_Point[n + 1];
 			double[] B;
 			for (int i = 0; i <= n; i++) {
-				B = WB_Bezier.allBernstein(v, m);
+				B = WB_Bernstein.getBernsteinCoefficientsOfOrderN(v, m);
 				Q[i] = new WB_Point();
 				for (int k = 0; k <= m; k++) {
-					Q[i]._addSelf(B[k], points[i][k]);
+					Q[i]._addMulSelf(B[k], points[i][k]);
 				}
 			}
-			B = WB_Bezier.allBernstein(u, n);
+			B = WB_Bernstein.getBernsteinCoefficientsOfOrderN(u, n);
 			for (int k = 0; k <= n; k++) {
-				S._addSelf(B[k], Q[k]);
+				S._addMulSelf(B[k], Q[k]);
 			}
 
 		}
@@ -135,7 +136,7 @@ public class WB_BezierSurface implements WB_Surface {
 			npoints[n + 1][j] = points[n][j];
 			final double inp = 1.0 / (n + 1);
 			for (int i = 1; i <= n; i++) {
-				npoints[i][j] = WB_Point.interpolate(points[i][j],
+				npoints[i][j] = gf.createInterpolatedPoint(points[i][j],
 						points[i - 1][j], i * inp);
 
 			}
@@ -152,7 +153,7 @@ public class WB_BezierSurface implements WB_Surface {
 			npoints[i][m + 1] = points[i][m];
 			final double inp = 1.0 / (n + 1);
 			for (int j = 1; j <= m; j++) {
-				npoints[i][j] = WB_Point.interpolate(points[i][j],
+				npoints[i][j] = gf.createInterpolatedPoint(points[i][j],
 						points[i][j - 1], j * inp);
 
 			}

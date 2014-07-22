@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javolution.util.FastList;
-import wblut.WB_Epsilon;
+import javolution.util.FastTable;
+import wblut.math.WB_Epsilon;
 import wblut.math.WB_Math;
 
 public class WB_BSPTree2D {
@@ -22,12 +22,12 @@ public class WB_BSPTree2D {
 		if (S2DItr.hasNext()) {
 			cseg = S2DItr.next();
 		}
-		tree.partition = new WB_Line2D(cseg.getOrigin(), cseg.getDirection());
-		final FastList<WB_Segment> _segs = new FastList<WB_Segment>();
+		tree.partition = new WB_Line(cseg.getOrigin(), cseg.getDirection());
+		final FastTable<WB_Segment> _segs = new FastTable<WB_Segment>();
 
 		_segs.add(cseg);
-		final FastList<WB_Segment> pos_list = new FastList<WB_Segment>();
-		final FastList<WB_Segment> neg_list = new FastList<WB_Segment>();
+		final FastTable<WB_Segment> pos_list = new FastTable<WB_Segment>();
+		final FastTable<WB_Segment> neg_list = new FastTable<WB_Segment>();
 		WB_Segment seg = null;
 		while (S2DItr.hasNext()) {
 			seg = S2DItr.next();
@@ -39,7 +39,7 @@ public class WB_BSPTree2D {
 			} else if (result == WB_Classification.BACK) {
 				neg_list.add(seg);
 			} else if (result == WB_Classification.CROSSING) { /* spanning */
-				final WB_Segment[] split_seg = WB_Intersection2D.splitSegment(
+				final WB_Segment[] split_seg = WB_Intersection.splitSegment2D(
 						seg, tree.partition);
 				if (split_seg != null) {
 					pos_list.add(split_seg[0]);
@@ -72,11 +72,11 @@ public class WB_BSPTree2D {
 		build(root, segments);
 	}
 
-	public void build(final WB_SimplePolygon2D poly) {
+	public void build(final WB_SimplePolygon poly) {
 		if (root == null) {
 			root = new WB_BSPNode2D();
 		}
-		build(root, poly.toExplicitSegments());
+		build(root, poly.toSegments());
 	}
 
 	public int pointLocation(final WB_Point p) {
@@ -105,7 +105,7 @@ public class WB_BSPTree2D {
 			}
 		} else {
 			for (int i = 0; i < node.segments.size(); i++) {
-				if (WB_Epsilon.isZero(WB_Distance2D.getDistance(p,
+				if (WB_Epsilon.isZero(WB_Distance.getDistance2D(p,
 						node.segments.get(i)))) {
 					return 0;
 				}
@@ -137,7 +137,7 @@ public class WB_BSPTree2D {
 				.classifySegmentToLine2D(S);
 
 		if (type == WB_Classification.CROSSING) {
-			final WB_Segment[] split = WB_Intersection2D.splitSegment(S,
+			final WB_Segment[] split = WB_Intersection.splitSegment2D(S,
 					node.partition);
 			if (split != null) {
 				getSegmentPosPartition(node, split[0], pos, neg, coSame, coDiff);
@@ -160,12 +160,12 @@ public class WB_BSPTree2D {
 			final List<WB_Segment> neg, final List<WB_Segment> coSame,
 			final List<WB_Segment> coDiff) {
 
-		FastList<WB_Segment> partSegments = new FastList<WB_Segment>();
+		FastTable<WB_Segment> partSegments = new FastTable<WB_Segment>();
 		partSegments.add(S);
 		WB_Segment thisS, otherS;
-		final WB_Line2D L = node.partition;
+		final WB_Line L = node.partition;
 		for (int i = 0; i < node.segments.size(); i++) {
-			final FastList<WB_Segment> newpartSegments = new FastList<WB_Segment>();
+			final FastTable<WB_Segment> newpartSegments = new FastTable<WB_Segment>();
 			otherS = node.segments.get(i);
 			final double v0 = L.getT(otherS.getOrigin());
 			final double v1 = L.getT(otherS.getEndpoint());
@@ -176,12 +176,12 @@ public class WB_BSPTree2D {
 				final double u1 = L.getT(thisS.getEndpoint());
 				double[] intersection;
 				if (u0 < u1) {
-					intersection = WB_Intersection2D.intervalIntersection(u0,
-							u1, WB_Math.min(v0, v1), WB_Math.max(v0, v1));
+					intersection = WB_Intersection.getIntervalIntersection2D(
+							u0, u1, WB_Math.min(v0, v1), WB_Math.max(v0, v1));
 
 					if (intersection[0] == 2) {
-						final WB_Point pi = L.getPoint(intersection[1]);
-						final WB_Point pj = L.getPoint(intersection[2]);
+						final WB_Point pi = L.getPointOnLine(intersection[1]);
+						final WB_Point pj = L.getPointOnLine(intersection[2]);
 						if (u0 < intersection[1]) {
 							newpartSegments.add(new WB_Segment(thisS
 									.getOrigin(), pi));
@@ -197,12 +197,12 @@ public class WB_BSPTree2D {
 					}
 
 				} else {
-					intersection = WB_Intersection2D.intervalIntersection(u1,
-							u0, WB_Math.min(v0, v1), WB_Math.max(v0, v1));
+					intersection = WB_Intersection.getIntervalIntersection2D(
+							u1, u0, WB_Math.min(v0, v1), WB_Math.max(v0, v1));
 
 					if (intersection[0] == 2) {
-						final WB_Point pi = L.getPoint(intersection[1]);
-						final WB_Point pj = L.getPoint(intersection[2]);
+						final WB_Point pi = L.getPointOnLine(intersection[1]);
+						final WB_Point pj = L.getPointOnLine(intersection[2]);
 						if (u1 < intersection[1]) {
 							newpartSegments.add(new WB_Segment(pi, thisS
 									.getEndpoint()));
@@ -281,7 +281,7 @@ public class WB_BSPTree2D {
 
 	private WB_BSPNode2D negate(final WB_BSPNode2D node) {
 		final WB_BSPNode2D negNode = new WB_BSPNode2D();
-		negNode.partition = new WB_Line2D(node.partition.getOrigin(),
+		negNode.partition = new WB_Line(node.partition.getOrigin(),
 				node.partition.getDirection().mul(-1));
 		for (int i = 0; i < node.segments.size(); i++) {
 			final WB_Segment seg = node.segments.get(i);
@@ -297,24 +297,23 @@ public class WB_BSPTree2D {
 		return negNode;
 	}
 
-	public void partitionPolygon(final WB_SimplePolygon2D P,
-			final List<WB_SimplePolygon2D> pos,
-			final List<WB_SimplePolygon2D> neg) {
+	public void partitionPolygon(final WB_SimplePolygon P,
+			final List<WB_SimplePolygon> pos, final List<WB_SimplePolygon> neg) {
 
 		partitionPolygon(root, P, pos, neg);
 
 	}
 
 	private void partitionPolygon(final WB_BSPNode2D node,
-			final WB_SimplePolygon2D P, final List<WB_SimplePolygon2D> pos,
-			final List<WB_SimplePolygon2D> neg) {
+			final WB_SimplePolygon P, final List<WB_SimplePolygon> pos,
+			final List<WB_SimplePolygon> neg) {
 
 		if (P.n > 2) {
 			final WB_Classification type = node.partition
 					.classifyPolygonToLine2D(P);
 
 			if (type == WB_Classification.CROSSING) {
-				final WB_SimplePolygon2D[] split = WB_Intersection2D
+				final WB_SimplePolygon[] split = WB_Intersection
 						.splitPolygon2D(P, node.partition);
 				if (split[0].n > 2) {
 					getPolygonPosPartition(node, split[0], pos, neg);
@@ -334,8 +333,8 @@ public class WB_BSPTree2D {
 	}
 
 	private void getPolygonPosPartition(final WB_BSPNode2D node,
-			final WB_SimplePolygon2D P, final List<WB_SimplePolygon2D> pos,
-			final List<WB_SimplePolygon2D> neg) {
+			final WB_SimplePolygon P, final List<WB_SimplePolygon> pos,
+			final List<WB_SimplePolygon> neg) {
 		if (node.pos != null) {
 			partitionPolygon(node.pos, P, pos, neg);
 		} else {
@@ -345,8 +344,8 @@ public class WB_BSPTree2D {
 	}
 
 	private void getPolygonNegPartition(final WB_BSPNode2D node,
-			final WB_SimplePolygon2D P, final List<WB_SimplePolygon2D> pos,
-			final List<WB_SimplePolygon2D> neg) {
+			final WB_SimplePolygon P, final List<WB_SimplePolygon> pos,
+			final List<WB_SimplePolygon> neg) {
 		if (node.neg != null) {
 			partitionPolygon(node.neg, P, pos, neg);
 		} else {

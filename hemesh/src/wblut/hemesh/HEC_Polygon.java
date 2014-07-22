@@ -1,10 +1,9 @@
 package wblut.hemesh;
 
-import wblut.WB_Epsilon;
-import wblut.geom.SimplePolygon;
 import wblut.geom.WB_Point;
-import wblut.geom.WB_SimplePolygon2D;
 import wblut.geom.WB_Vector;
+import wblut.geom.interfaces.SimplePolygon;
+import wblut.math.WB_Epsilon;
 
 public class HEC_Polygon extends HEC_Creator {
 
@@ -15,18 +14,6 @@ public class HEC_Polygon extends HEC_Creator {
 	public HEC_Polygon() {
 		super();
 		override = true;
-	}
-
-	public HEC_Polygon(final WB_SimplePolygon2D poly, final double d) {
-		this();
-		override = true;
-		polygon = poly.toPolygon();
-		thickness = d;
-	}
-
-	public HEC_Polygon setPolygon(final WB_SimplePolygon2D poly) {
-		polygon = poly.toPolygon();
-		return this;
 	}
 
 	public HEC_Polygon(final SimplePolygon poly, final double d) {

@@ -1,6 +1,5 @@
 package wblut.math;
 
-import wblut.WB_Epsilon;
 
 /**
  * 4x4 matrix.

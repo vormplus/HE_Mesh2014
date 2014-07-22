@@ -2,22 +2,15 @@ package wblut.hemesh;
 
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
-import javolution.util.FastList;
-import javolution.util.FastMap;
-import wblut.geom.WB_AABB;
 import wblut.geom.WB_Classification;
-import wblut.geom.WB_IndexedTriangle2D;
 import wblut.geom.WB_Plane;
-import wblut.geom.WB_Point;
-import wblut.geom.WB_Triangulate2D;
 
 /**
  * Planar cut of a mesh. Faces on positive side of cut plane are removed.
- * 
+ *
  * @author Frederik Vanhoutte (W:Blut)
- * 
+ *
  */
 public class HEM_Slice extends HEM_Modifier {
 
@@ -47,7 +40,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/**
 	 * Set offset.
-	 * 
+	 *
 	 * @param d
 	 *            offset
 	 * @return self
@@ -67,7 +60,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/**
 	 * Set cut plane.
-	 * 
+	 *
 	 * @param P
 	 *            cut plane
 	 * @return self
@@ -79,7 +72,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/**
 	 * Sets the plane.
-	 * 
+	 *
 	 * @param ox
 	 *            the ox
 	 * @param oy
@@ -102,7 +95,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/**
 	 * Set reverse option.
-	 * 
+	 *
 	 * @param b
 	 *            true, false
 	 * @return self
@@ -114,7 +107,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/**
 	 * Set option to cap holes.
-	 * 
+	 *
 	 * @param b
 	 *            true, false;
 	 * @return self
@@ -127,19 +120,19 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/**
 	 * Sets the simple cap.
-	 * 
+	 *
 	 * @param b
 	 *            the b
 	 * @return the hE m_ slice
 	 */
 	public HEM_Slice setSimpleCap(final Boolean b) {
-		simpleCap = b;
+		simpleCap = true;// b;
 		return this;
 	}
 
 	/**
 	 * Set option to reset mesh center.
-	 * 
+	 *
 	 * @param b
 	 *            true, false;
 	 * @return self
@@ -152,7 +145,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Modifier#apply(wblut.hemesh.HE_Mesh)
 	 */
 	@Override
@@ -189,7 +182,8 @@ public class HEM_Slice extends HEM_Modifier {
 			if ((cptp == WB_Classification.FRONT)
 					|| (cptp == WB_Classification.ON)) {
 				newFaces.add(face);
-			} else {
+			}
+			else {
 				if (cut.contains(face)) {
 					cut.remove(face);
 				}
@@ -213,106 +207,17 @@ public class HEM_Slice extends HEM_Modifier {
 		if (capHoles) {
 			if (simpleCap) {
 				cap.addFaces(mesh.capHoles());
-				mesh.pairHalfedges();
+				mesh.pairHalfedgesAndCreateEdges();
 				mesh.capHalfedges();
-			} else {
-				List<HE_Halfedge> unpairedHalfedges = mesh
-						.getUnpairedHalfedges();
-				if (unpairedHalfedges.size() > 0) {
-					final FastList<HE_Vertex> verticesOnCutFaces = new FastList<HE_Vertex>();
-					final FastList<WB_Point> mappedVertices = new FastList<WB_Point>();
-					final FastMap<Long, Integer> vertexKeyToMappedVertexIndex = new FastMap<Long, Integer>();
-					HE_Vertex v;
-					for (final HE_Halfedge he : unpairedHalfedges) {
-						v = he.getVertex();
-						if (!verticesOnCutFaces.contains(v)) {
-							verticesOnCutFaces.add(v);
-							final WB_Point mappedV = lP.localPoint2D(v);
-							mappedVertices.add(mappedV);
-							vertexKeyToMappedVertexIndex.put(v.key(),
-									mappedVertices.size() + 3);
-						}
-					}
-					final WB_AABB AABB = new WB_AABB(mappedVertices);
-					final WB_Point leftlower = new WB_Point(AABB.getMin())
-							._mulSelf(2)._subSelf(AABB.getCenterX(),
-									AABB.getCenterY(), AABB.getCenterZ());
-					final WB_Point rightupper = new WB_Point(AABB.getMax())
-							._mulSelf(2)._subSelf(AABB.getCenterX(),
-									AABB.getCenterY(), AABB.getCenterZ());
-					final WB_Point[] boundary = new WB_Point[4];
+			}
+			else {
+				// TODO
 
-					boundary[0] = leftlower;
-					boundary[1] = new WB_Point(leftlower.x, rightupper.y);
-					boundary[2] = rightupper;
-					boundary[3] = new WB_Point(rightupper.x, leftlower.y);
-
-					final WB_Triangulate2D triang = new WB_Triangulate2D();
-
-					triang.startWithBoundary(boundary);
-					for (final WB_Point point : mappedVertices) {
-						triang.addInteriorPoint(point);
-					}
-					for (final HE_Halfedge he : unpairedHalfedges) {
-						final int c1 = vertexKeyToMappedVertexIndex.get(he
-								.getVertex().key());
-						final int c2 = vertexKeyToMappedVertexIndex.get(he
-								.getEndVertex().key());
-						triang.addConstraint(c1, c2);
-					}
-					final WB_Point[] dummy = new WB_Point[mappedVertices.size() + 4];
-					for (int i = 0; i < mappedVertices.size() + 4; i++) {
-						dummy[i] = new WB_Point(1, 1);
-
-					}
-					final List<WB_IndexedTriangle2D> tris = triang
-							.getIndexedTrianglesAsList(dummy);
-					for (final WB_IndexedTriangle2D tri : tris) {
-						if ((tri.i1 > 3) && (tri.i2 > 3) && (tri.i3 > 3)) {// leave
-																			// out
-																			// triangles
-																			// with
-																			// boundary
-																			// points
-
-							final HE_Face newFace = new HE_Face();
-							final HE_Halfedge he1 = new HE_Halfedge();
-							final HE_Halfedge he2 = new HE_Halfedge();
-							final HE_Halfedge he3 = new HE_Halfedge();
-							he1.setVertex(verticesOnCutFaces.get(tri.i1 - 4));
-							he2.setVertex(verticesOnCutFaces.get(tri.i3 - 4));
-							he3.setVertex(verticesOnCutFaces.get(tri.i2 - 4));
-							he1.setNext(he2);
-							he1.setFace(newFace);
-							he2.setNext(he3);
-							he2.setFace(newFace);
-							he3.setNext(he1);
-							he3.setFace(newFace);
-							mesh.add(he1);
-							mesh.add(he2);
-							mesh.add(he3);
-							newFace.setHalfedge(he1);
-							mesh.add(newFace);
-							cap.add(newFace);
-
-						}
-					}
-					mesh.pairHalfedges();
-					int old = 0;
-					unpairedHalfedges = mesh.getUnpairedHalfedges();
-					while (unpairedHalfedges.size() != old) {
-						old = unpairedHalfedges.size();
-						for (final HE_Halfedge he : unpairedHalfedges) {
-							mesh.remove(he.getFace());
-						}
-						mesh.cleanUnusedElementsByFace();
-						unpairedHalfedges = mesh.getUnpairedHalfedges();
-					}
-				}
 			}
 
-		} else {
-			mesh.pairHalfedges();
+		}
+		else {
+			mesh.pairHalfedgesAndCreateEdges();
 			mesh.capHalfedges();
 		}
 
@@ -326,7 +231,7 @@ public class HEM_Slice extends HEM_Modifier {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see
 	 * wblut.hemesh.modifiers.HEB_Modifier#modifySelected(wblut.hemesh.HE_Mesh)
 	 */

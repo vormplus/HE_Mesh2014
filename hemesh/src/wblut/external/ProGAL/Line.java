@@ -1,6 +1,6 @@
 package wblut.external.ProGAL;
 
-import wblut.WB_Epsilon;
+import wblut.math.WB_Epsilon;
 
 /**
  * Part of ProGAL: http://www.diku.dk/~rfonseca/ProGAL/
@@ -160,8 +160,6 @@ public class Line {
 	/**
 	 * Gets the minimum squared distance to another line.
 	 * 
-	 * @see [Ericsson 05, p. 147]
-	 * @hop 14-32
 	 */
 	public double getSquaredDistance(Line l) {
 		double a = dir.getLengthSquared();

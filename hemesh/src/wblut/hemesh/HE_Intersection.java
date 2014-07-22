@@ -2,11 +2,10 @@ package wblut.hemesh;
 
 import java.util.List;
 
-import javolution.util.FastList;
-import wblut.geom.Segment;
-import wblut.geom.WB_AABBNode;
+import javolution.util.FastTable;
 import wblut.geom.WB_AABBTree;
-import wblut.geom.WB_Distance3D;
+import wblut.geom.WB_AABBTree.WB_AABBNode;
+import wblut.geom.WB_Distance;
 import wblut.geom.WB_Intersection;
 import wblut.geom.WB_IntersectionResult;
 import wblut.geom.WB_Line;
@@ -14,54 +13,68 @@ import wblut.geom.WB_Plane;
 import wblut.geom.WB_Point;
 import wblut.geom.WB_Ray;
 import wblut.geom.WB_Segment;
+import wblut.geom.interfaces.Segment;
+import wblut.math.WB_Epsilon;
 
 public class HE_Intersection {
 
-	public static HE_Face lastface;
-
-	public static WB_Point getIntersection(final HE_Face face,
+	public static HE_FaceIntersection getIntersection(final HE_Face face,
 			final WB_Line line) {
 		final WB_Plane P = face.toPlane();
-		WB_Point p = null;
-		final WB_IntersectionResult lpi = WB_Intersection.getIntersection(line,
-				P);
+		HE_FaceIntersection p = null;
+		final WB_IntersectionResult lpi = WB_Intersection.getIntersection3D(
+				line, P);
 		if (lpi.intersection) {
-			if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-				p = (WB_Point) lpi.object;
+			p = new HE_FaceIntersection(face, (WB_Point) lpi.object);
+			final WB_Point cp = WB_Intersection.getClosestPoint3D(p.point,
+					face.toPlanarPolygon());
+
+			if (WB_Epsilon.isZero(WB_Distance.getDistance3D(cp, p.point))) {
+				return p;
 			}
 		}
-		return p;
+		return null;
 	}
 
-	public static WB_Point getIntersection(final HE_Face face, final WB_Ray ray) {
+	public static HE_FaceIntersection getIntersection(final HE_Face face,
+			final WB_Ray ray) {
 		final WB_Plane P = face.toPlane();
-		WB_Point p = null;
-		final WB_IntersectionResult lpi = WB_Intersection.getIntersection(ray,
-				P);
+		HE_FaceIntersection p = null;
+		final WB_IntersectionResult lpi = WB_Intersection.getIntersection3D(
+				ray, P);
 		if (lpi.intersection) {
-			if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-				p = (WB_Point) lpi.object;
+			p = new HE_FaceIntersection(face, (WB_Point) lpi.object);
+			final WB_Point cp = WB_Intersection.getClosestPoint3D(p.point,
+					face.toPlanarPolygon());
+
+			if (WB_Epsilon.isZero(WB_Distance.getDistance3D(cp, p.point))) {
+				return new HE_FaceIntersection(face, p.point);
 			}
 		}
-		return p;
+		return null;
 	}
 
-	public static WB_Point getIntersection(final HE_Face face,
+	public static HE_FaceIntersection getIntersection(final HE_Face face,
 			final Segment segment) {
 		final WB_Plane P = face.toPlane();
-		WB_Point p = null;
-		final WB_IntersectionResult lpi = WB_Intersection.getIntersection(
+		HE_FaceIntersection p = null;
+		final WB_IntersectionResult lpi = WB_Intersection.getIntersection3D(
 				segment, P);
 		if (lpi.intersection) {
-			if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-				p = (WB_Point) lpi.object;
+			p = new HE_FaceIntersection(face, (WB_Point) lpi.object);
+			final WB_Point cp = WB_Intersection.getClosestPoint3D(p.point,
+					face.toPlanarPolygon());
+
+			if (WB_Epsilon.isZero(WB_Distance.getDistance3D(cp, p.point))) {
+				return p;
 			}
 		}
-		return p;
+		return null;
+
 	}
 
 	public static double getIntersection(final HE_Edge e, final WB_Plane P) {
-		final WB_IntersectionResult i = WB_Intersection.getIntersection(
+		final WB_IntersectionResult i = WB_Intersection.getIntersection3D(
 				e.getStartVertex(), e.getEndVertex(), P);
 
 		if (i.intersection == false) {
@@ -71,95 +84,78 @@ public class HE_Intersection {
 		return i.t1;// intersection on edge
 	}
 
-	public static List<WB_Point> getIntersection(final WB_AABBTree tree,
-			final WB_Ray ray) {
-		WB_Plane P;
-		WB_IntersectionResult lpi;
+	public static List<HE_FaceIntersection> getIntersection(
+			final WB_AABBTree tree, final WB_Ray ray) {
 
-		final List<WB_Point> p = new FastList<WB_Point>();
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(ray,
+		final List<HE_FaceIntersection> p = new FastTable<HE_FaceIntersection>();
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(ray,
 				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
 
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(ray, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					p.add((WB_Point) lpi.object);
-				}
+			final HE_FaceIntersection sect = getIntersection(face, ray);
+			if (sect != null) {
+				p.add(sect);
 			}
 		}
 
 		return p;
 	}
 
-	public static List<WB_Point> getIntersection(final WB_AABBTree tree,
-			final Segment segment) {
-		WB_Plane P;
-		WB_IntersectionResult lpi;
+	public static List<HE_FaceIntersection> getIntersection(
+			final WB_AABBTree tree, final Segment segment) {
 
-		final List<WB_Point> p = new FastList<WB_Point>();
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(
+		final List<HE_FaceIntersection> p = new FastTable<HE_FaceIntersection>();
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(
 				segment, tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
 
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(segment, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					p.add((WB_Point) lpi.object);
-				}
+			final HE_FaceIntersection sect = getIntersection(face, segment);
+			if (sect != null) {
+				p.add(sect);
 			}
 		}
-
 		return p;
 	}
 
-	public static List<WB_Point> getIntersection(final WB_AABBTree tree,
-			final WB_Line line) {
-		WB_Plane P;
-		WB_IntersectionResult lpi;
+	public static List<HE_FaceIntersection> getIntersection(
+			final WB_AABBTree tree, final WB_Line line) {
 
-		final List<WB_Point> p = new FastList<WB_Point>();
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(line,
+		final List<HE_FaceIntersection> p = new FastTable<HE_FaceIntersection>();
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(line,
 				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
 
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(line, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					p.add((WB_Point) lpi.object);
-				}
+			final HE_FaceIntersection sect = getIntersection(face, line);
+			if (sect != null) {
+				p.add(sect);
 			}
 		}
-
 		return p;
 	}
 
 	public static List<WB_Segment> getIntersection(final WB_AABBTree tree,
 			final WB_Plane P) {
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection
-				.getIntersection(P, tree);
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(P,
+				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
-		final List<WB_Segment> cuts = new FastList<WB_Segment>();
+		final List<WB_Segment> cuts = new FastTable<WB_Segment>();
 		for (final HE_Face face : candidates) {
-			cuts.addAll(WB_Intersection.getIntersection(face.toPolygon(), P));
+			cuts.addAll(WB_Intersection.getIntersection3D(face.toPolygon(), P));
 		}
 
 		return cuts;
@@ -167,9 +163,9 @@ public class HE_Intersection {
 
 	public static List<HE_Face> getPotentialIntersectedFaces(
 			final WB_AABBTree tree, final WB_Plane P) {
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection
-				.getIntersection(P, tree);
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(P,
+				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
@@ -179,9 +175,9 @@ public class HE_Intersection {
 
 	public static List<HE_Face> getPotentialIntersectedFaces(
 			final WB_AABBTree tree, final WB_Ray R) {
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection
-				.getIntersection(R, tree);
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(R,
+				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
@@ -191,9 +187,9 @@ public class HE_Intersection {
 
 	public static List<HE_Face> getPotentialIntersectedFaces(
 			final WB_AABBTree tree, final WB_Line L) {
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection
-				.getIntersection(L, tree);
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(L,
+				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
@@ -203,8 +199,8 @@ public class HE_Intersection {
 
 	public static List<HE_Face> getPotentialIntersectedFaces(
 			final WB_AABBTree tree, final Segment segment) {
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(
 				segment, tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
@@ -213,50 +209,44 @@ public class HE_Intersection {
 		return candidates;
 	}
 
-	public static WB_Point getClosestIntersection(final WB_AABBTree tree,
-			final WB_Ray ray) {
+	public static HE_FaceIntersection getClosestIntersection(
+			final WB_AABBTree tree, final WB_Ray ray) {
 
-		WB_Plane P;
-		WB_IntersectionResult lpi;
-		WB_Point p = null;
+		HE_FaceIntersection p = null;
 
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(ray,
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(ray,
 				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
 
 		double d2, d2min = Double.POSITIVE_INFINITY;
+
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(ray, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					d2 = WB_Distance3D.sqDistance(ray.getOrigin(),
-							(WB_Point) lpi.object);
-					if (d2 < d2min) {
-						lastface = face;
-						d2min = d2;
-						p = (WB_Point) lpi.object;
-					}
+			final HE_FaceIntersection sect = getIntersection(face, ray);
+			if (sect != null) {
+				d2 = sect.point.getSqDistance(ray.getOrigin());
+				if (d2 < d2min) {
+					p = sect;
+
+					d2min = d2;
 				}
 			}
+
 		}
 
 		return p;
 
 	}
 
-	public static WB_Point getFurthestIntersection(final WB_AABBTree tree,
-			final WB_Ray ray) {
+	public static HE_FaceIntersection getFurthestIntersection(
+			final WB_AABBTree tree, final WB_Ray ray) {
 
-		WB_Plane P;
-		WB_IntersectionResult lpi;
-		WB_Point p = null;
+		HE_FaceIntersection p = null;
 
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(ray,
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(ray,
 				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
@@ -264,69 +254,60 @@ public class HE_Intersection {
 
 		double d2, d2max = -1;
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(ray, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					d2 = WB_Distance3D.sqDistance(ray.getOrigin(),
-							(WB_Point) lpi.object);
-					if (d2 > d2max) {
-						lastface = face;
-						d2max = d2;
-						p = (WB_Point) lpi.object;
-					}
+			final HE_FaceIntersection sect = getIntersection(face, ray);
+			if (sect != null) {
+				d2 = sect.point.getSqDistance(ray.getOrigin());
+				if (d2 > d2max) {
+					p = sect;
+					d2max = d2;
+
 				}
 			}
+
 		}
 
 		return p;
 
 	}
 
-	public static WB_Point getClosestIntersection(final WB_AABBTree tree,
-			final WB_Line line) {
+	public static HE_FaceIntersection getClosestIntersection(
+			final WB_AABBTree tree, final WB_Line line) {
 
-		WB_Plane P;
-		WB_IntersectionResult lpi;
-		WB_Point p = null;
+		HE_FaceIntersection p = null;
 
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(line,
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(line,
 				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
 
 		double d2, d2min = Double.POSITIVE_INFINITY;
+
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(line, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					d2 = WB_Distance3D.sqDistance(line.getOrigin(),
-							(WB_Point) lpi.object);
-					if (d2 < d2min) {
-						lastface = face;
-						d2min = d2;
-						p = (WB_Point) lpi.object;
-					}
+			final HE_FaceIntersection sect = getIntersection(face, line);
+			if (sect != null) {
+				d2 = sect.point.getSqDistance(line.getOrigin());
+				if (d2 < d2min) {
+					p = sect;
+					d2min = d2;
+
 				}
 			}
+
 		}
 
 		return p;
 
 	}
 
-	public static WB_Point getFurthestIntersection(final WB_AABBTree tree,
-			final WB_Line line) {
+	public static HE_FaceIntersection getFurthestIntersection(
+			final WB_AABBTree tree, final WB_Line line) {
 
-		WB_Plane P;
-		WB_IntersectionResult lpi;
-		WB_Point p = null;
+		HE_FaceIntersection p = null;
 
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(line,
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(line,
 				tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
@@ -334,69 +315,60 @@ public class HE_Intersection {
 
 		double d2, d2max = -1;
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(line, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					d2 = WB_Distance3D.sqDistance(line.getOrigin(),
-							(WB_Point) lpi.object);
-					if (d2 > d2max) {
-						lastface = face;
-						d2max = d2;
-						p = (WB_Point) lpi.object;
-					}
+			final HE_FaceIntersection sect = getIntersection(face, line);
+			if (sect != null) {
+				d2 = sect.point.getSqDistance(line.getOrigin());
+				if (d2 > d2max) {
+					p = sect;
+					d2max = d2;
+
 				}
 			}
+
 		}
 
 		return p;
 
 	}
 
-	public static WB_Point getClosestIntersection(final WB_AABBTree tree,
-			final Segment segment) {
+	public static HE_FaceIntersection getClosestIntersection(
+			final WB_AABBTree tree, final Segment segment) {
 
-		WB_Plane P;
-		WB_IntersectionResult lpi;
-		WB_Point p = null;
+		HE_FaceIntersection p = null;
 
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(
 				segment, tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
 		}
 
 		double d2, d2min = Double.POSITIVE_INFINITY;
+
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(segment, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					d2 = WB_Distance3D.sqDistance(segment.getOrigin(),
-							(WB_Point) lpi.object);
-					if (d2 < d2min) {
-						lastface = face;
-						d2min = d2;
-						p = (WB_Point) lpi.object;
-					}
+			final HE_FaceIntersection sect = getIntersection(face, segment);
+			if (sect != null) {
+				d2 = sect.point.getSqDistance(segment.getOrigin());
+				if (d2 < d2min) {
+					p = sect;
+					d2min = d2;
+
 				}
 			}
+
 		}
 
 		return p;
 
 	}
 
-	public static WB_Point getFurthestIntersection(final WB_AABBTree tree,
-			final Segment segment) {
+	public static HE_FaceIntersection getFurthestIntersection(
+			final WB_AABBTree tree, final Segment segment) {
 
-		WB_Plane P;
-		WB_IntersectionResult lpi;
-		WB_Point p = null;
+		HE_FaceIntersection p = null;
 
-		final List<HE_Face> candidates = new FastList<HE_Face>();
-		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection(
+		final List<HE_Face> candidates = new FastTable<HE_Face>();
+		final List<WB_AABBNode> nodes = WB_Intersection.getIntersection3D(
 				segment, tree);
 		for (final WB_AABBNode n : nodes) {
 			candidates.addAll(n.getFaces());
@@ -404,37 +376,34 @@ public class HE_Intersection {
 
 		double d2, d2max = -1;
 		for (final HE_Face face : candidates) {
-			P = face.toPlane();
-			lpi = WB_Intersection.getIntersection(segment, P);
-			if (lpi.intersection) {
-				if (HE_Mesh.pointIsInFace((WB_Point) lpi.object, face)) {
-					d2 = WB_Distance3D.sqDistance(segment.getOrigin(),
-							(WB_Point) lpi.object);
-					if (d2 > d2max) {
-						lastface = face;
-						d2max = d2;
-						p = (WB_Point) lpi.object;
-					}
+			final HE_FaceIntersection sect = getIntersection(face, segment);
+			if (sect != null) {
+				d2 = sect.point.getSqDistance(segment.getOrigin());
+				if (d2 > d2max) {
+					p = sect;
+					d2max = d2;
+
 				}
 			}
+
 		}
 
 		return p;
 
 	}
 
-	public static List<WB_Point> getIntersection(final HE_Mesh mesh,
+	public static List<HE_FaceIntersection> getIntersection(final HE_Mesh mesh,
 			final WB_Ray ray) {
 
 		return getIntersection(new WB_AABBTree(mesh, 10), ray);
 	}
 
-	public static List<WB_Point> getIntersection(final HE_Mesh mesh,
+	public static List<HE_FaceIntersection> getIntersection(final HE_Mesh mesh,
 			final Segment segment) {
 		return getIntersection(new WB_AABBTree(mesh, 10), segment);
 	}
 
-	public static List<WB_Point> getIntersection(final HE_Mesh mesh,
+	public static List<HE_FaceIntersection> getIntersection(final HE_Mesh mesh,
 			final WB_Line line) {
 		return getIntersection(new WB_AABBTree(mesh, 10), line);
 	}
@@ -464,40 +433,40 @@ public class HE_Intersection {
 		return getPotentialIntersectedFaces(new WB_AABBTree(mesh, 10), segment);
 	}
 
-	public static WB_Point getClosestIntersection(final HE_Mesh mesh,
-			final WB_Ray ray) {
+	public static HE_FaceIntersection getClosestIntersection(
+			final HE_Mesh mesh, final WB_Ray ray) {
 
 		return getClosestIntersection(new WB_AABBTree(mesh, 10), ray);
 
 	}
 
-	public static WB_Point getFurthestIntersection(final HE_Mesh mesh,
-			final WB_Ray ray) {
+	public static HE_FaceIntersection getFurthestIntersection(
+			final HE_Mesh mesh, final WB_Ray ray) {
 		return getFurthestIntersection(new WB_AABBTree(mesh, 10), ray);
 
 	}
 
-	public static WB_Point getClosestIntersection(final HE_Mesh mesh,
-			final WB_Line line) {
+	public static HE_FaceIntersection getClosestIntersection(
+			final HE_Mesh mesh, final WB_Line line) {
 		return getClosestIntersection(new WB_AABBTree(mesh, 10), line);
 
 	}
 
-	public static WB_Point getFurthestIntersection(final HE_Mesh mesh,
-			final WB_Line line) {
+	public static HE_FaceIntersection getFurthestIntersection(
+			final HE_Mesh mesh, final WB_Line line) {
 		return getFurthestIntersection(new WB_AABBTree(mesh, 10), line);
 
 	}
 
-	public static WB_Point getClosestIntersection(final HE_Mesh mesh,
-			final Segment segment) {
+	public static HE_FaceIntersection getClosestIntersection(
+			final HE_Mesh mesh, final Segment segment) {
 
 		return getClosestIntersection(new WB_AABBTree(mesh, 10), segment);
 
 	}
 
-	public static WB_Point getFurthestIntersection(final HE_Mesh mesh,
-			final Segment segment) {
+	public static HE_FaceIntersection getFurthestIntersection(
+			final HE_Mesh mesh, final Segment segment) {
 
 		return getFurthestIntersection(new WB_AABBTree(mesh, 10), segment);
 	}

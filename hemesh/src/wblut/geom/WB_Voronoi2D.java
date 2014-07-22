@@ -2,10 +2,10 @@ package wblut.geom;
 
 import java.util.List;
 
-import javolution.util.FastList;
 import javolution.util.FastMap;
-import wblut.WB_Epsilon;
+import javolution.util.FastTable;
 import wblut.geom.WB_KDTree.WB_KDEntry;
+import wblut.math.WB_Epsilon;
 
 /**
  * Stripped version of Zhenyu Pan's JAVA transcription of Shane O'Sullivan's C
@@ -83,24 +83,24 @@ public class WB_Voronoi2D {
 
 	private VoronoiHalfedge2D edgeListLeftEnd, edgeListRightEnd;
 
-	private FastList<WB_IndexedBisector2D> allEdges;
+	private FastTable<WB_IndexedBisector> allEdges;
 
 	private FastMap<WB_Point, Integer> indices;
 
 	public WB_Voronoi2D() {
 	}
 
-	public List<WB_IndexedBisector2D> generateVoronoi(final double minX,
+	public List<WB_IndexedBisector> generateVoronoi(final double minX,
 			final double maxX, final double minY, final double maxY,
 			final WB_Point[] points) {
-		final FastList<WB_Point> ppoints = new FastList<WB_Point>();
+		final FastTable<WB_Point> ppoints = new FastTable<WB_Point>();
 		for (final WB_Point point : points) {
 			ppoints.add(point);
 		}
 		return generateVoronoi(minX, maxX, minY, maxY, ppoints);
 	}
 
-	public List<WB_IndexedBisector2D> generateVoronoi(double minX, double maxX,
+	public List<WB_IndexedBisector> generateVoronoi(double minX, double maxX,
 			double minY, double maxY, final List<WB_Point> points) {
 		double temp = 0;
 		if (minX > maxX) {
@@ -122,16 +122,15 @@ public class WB_Voronoi2D {
 		collectSites(points);
 		createVoronoi2D();
 
-		final List<WB_IndexedBisector2D> result = new FastList<WB_IndexedBisector2D>(
-				allEdges.size());
+		final List<WB_IndexedBisector> result = new FastTable<WB_IndexedBisector>();
 		result.addAll(allEdges);
 		return result;
 	}
 
 	private void collectSites(final List<WB_Point> pointsIn) {
-		allEdges = new FastList<WB_IndexedBisector2D>();
+		allEdges = new FastTable<WB_IndexedBisector>();
 
-		final FastList<WB_Point> points = new FastList<WB_Point>();
+		final FastTable<WB_Point> points = new FastTable<WB_Point>();
 		final WB_KDTree<WB_Point, Integer> kdtree = new WB_KDTree<WB_Point, Integer>();
 		WB_KDEntry<WB_Point, Integer>[] neighbors;
 		WB_Point p = new WB_Point(pointsIn.get(0));
@@ -149,23 +148,23 @@ public class WB_Voronoi2D {
 		sortSites(points);
 	}
 
-	private void sortSites(final FastList<WB_Point> points) {
+	private void sortSites(final FastTable<WB_Point> points) {
 		sites = new WB_Point[nsites];
-		xmin = points.get(0).x;
-		ymin = points.get(0).y;
+		xmin = points.get(0).xd();
+		ymin = points.get(0).yd();
 		xmax = xmin;
 		ymax = ymin;
 		indices = new FastMap<WB_Point, Integer>();
 		for (int i = 0; i < nsites; i++) {
-			sites[i] = new WB_Point(points.get(i).x, points.get(i).y);
+			sites[i] = new WB_Point(points.get(i).xd(), points.get(i).yd());
 			indices.put(sites[i], i);
-			final double xi = points.get(i).x;
+			final double xi = points.get(i).xd();
 			if (xi < xmin) {
 				xmin = xi;
 			} else if (xi > xmax) {
 				xmax = xi;
 			}
-			final double yi = points.get(i).y;
+			final double yi = points.get(i).yd();
 			if (yi < ymin) {
 				ymin = yi;
 			} else if (yi > ymax) {
@@ -206,7 +205,9 @@ public class WB_Voronoi2D {
 			}
 
 			if (newsite != null
-					&& (isPointQueueEmpty() || newsite.y < newintstar.y || (newsite.y == newintstar.y && newsite.x < newintstar.x))) {
+					&& (isPointQueueEmpty() || newsite.yd() < newintstar.yd() || (newsite
+							.yd() == newintstar.yd() && newsite.xd() < newintstar
+							.xd()))) {
 
 				/* new site is smallest -this is a site event */
 				// get the first HalfEdge to the LEFT of the new site
@@ -230,7 +231,7 @@ public class WB_Voronoi2D {
 				if ((p = intersect(lbnd, bisector)) != null) {
 					removeHalfedgeFromPointqueue(lbnd);
 					insertHalfedgeInPointqueue(lbnd, p,
-							WB_Distance2D.getDistance(p, newsite));
+							WB_Distance.getDistance2D(p, newsite));
 				}
 				lbnd = bisector;
 				// create a new HalfEdge, setting its ELpm field to 1
@@ -243,7 +244,7 @@ public class WB_Voronoi2D {
 				if ((p = intersect(bisector, rbnd)) != null) {
 					// push the HE into the ordered linked list of vertices
 					insertHalfedgeInPointqueue(bisector, p,
-							WB_Distance2D.getDistance(p, newsite));
+							WB_Distance.getDistance2D(p, newsite));
 				}
 
 				newsite = getNextSite();
@@ -283,7 +284,7 @@ public class WB_Voronoi2D {
 				// to it in Hash Map
 				pm = leftEnd; // set the pm variable to zero
 
-				if (bot.y > top.y)
+				if (bot.yd() > top.yd())
 				// if the site to the left of the event is higher than the
 				// Site
 				{ // to the right of it, then swap them and set the 'pm'
@@ -314,12 +315,12 @@ public class WB_Voronoi2D {
 				if ((p = intersect(llbnd, bisector)) != null) {
 					removeHalfedgeFromPointqueue(llbnd);
 					insertHalfedgeInPointqueue(llbnd, p,
-							WB_Distance2D.getDistance(p, bot));
+							WB_Distance.getDistance2D(p, bot));
 				}
 
 				if ((p = intersect(bisector, rrbnd)) != null) {
 					insertHalfedgeInPointqueue(bisector, p,
-							WB_Distance2D.getDistance(p, bot));
+							WB_Distance.getDistance2D(p, bot));
 				}
 			} else {
 				break;
@@ -364,10 +365,11 @@ public class WB_Voronoi2D {
 		VoronoiHalfedge2D last, next;
 
 		he.vertex = v;
-		he.ystar = (v.y + offset);
+		he.ystar = (v.yd() + offset);
 		last = pointQueueMarkers[pointQueueMarker(he)];
 		while ((next = last.nextHalfedgeInPointQueue) != null
-				&& (he.ystar > next.ystar || (he.ystar == next.ystar && v.x > next.vertex.x))) {
+				&& (he.ystar > next.ystar || (he.ystar == next.ystar && v.xd() > next.vertex
+						.xd()))) {
 			last = next;
 		}
 		he.nextHalfedgeInPointQueue = last.nextHalfedgeInPointQueue;
@@ -400,8 +402,9 @@ public class WB_Voronoi2D {
 		while (pointQueueMarkers[pointQueueMin].nextHalfedgeInPointQueue == null) {
 			pointQueueMin += 1;
 		}
-		result.x = pointQueueMarkers[pointQueueMin].nextHalfedgeInPointQueue.vertex.x;
-		result.y = pointQueueMarkers[pointQueueMin].nextHalfedgeInPointQueue.ystar;
+		result._setX(pointQueueMarkers[pointQueueMin].nextHalfedgeInPointQueue.vertex
+				.xd());
+		result._setY(pointQueueMarkers[pointQueueMin].nextHalfedgeInPointQueue.ystar);
 		return (result);
 	}
 
@@ -471,7 +474,7 @@ public class WB_Voronoi2D {
 		/* Use hash table to get close to desired halfedge */
 		// use the hash function to find the place in the hash map that this
 		// HalfEdge should be
-		marker = (int) ((p.x - xmin) / deltax * numberOfEdgeListMarkers);
+		marker = (int) ((p.xd() - xmin) / deltax * numberOfEdgeListMarkers);
 
 		// make sure that the bucket position in within the range of the hash
 		// array
@@ -541,12 +544,12 @@ public class WB_Voronoi2D {
 		newedge.endPoints[1] = null;
 
 		// get the difference in x dist between the sites
-		dx = s2.x - s1.x;
-		dy = s2.y - s1.y;
+		dx = s2.xd() - s1.xd();
+		dy = s2.yd() - s1.yd();
 		// make sure that the difference in positive
 		adx = dx > 0 ? dx : -dx;
 		ady = dy > 0 ? dy : -dy;
-		newedge.c = s1.x * dx + s1.y * dy + (dx * dx + dy * dy) * 0.5;// get
+		newedge.c = s1.xd() * dx + s1.yd() * dy + (dx * dx + dy * dy) * 0.5;// get
 		// the
 		// slope
 		// of
@@ -590,10 +593,10 @@ public class WB_Voronoi2D {
 		WB_Point s1, s2;
 		double x1 = 0, x2 = 0, y1 = 0, y2 = 0;
 
-		x1 = e.betweenSites[0].x;
-		x2 = e.betweenSites[1].x;
-		y1 = e.betweenSites[0].y;
-		y2 = e.betweenSites[1].y;
+		x1 = e.betweenSites[0].xd();
+		x2 = e.betweenSites[1].xd();
+		y1 = e.betweenSites[0].yd();
+		y2 = e.betweenSites[1].yd();
 
 		pxmin = borderMinX;
 		pxmax = borderMaxX;
@@ -610,16 +613,16 @@ public class WB_Voronoi2D {
 
 		if (e.a == 1.0) {
 			y1 = pymin;
-			if (s1 != null && s1.y > pymin) {
-				y1 = s1.y;
+			if (s1 != null && s1.yd() > pymin) {
+				y1 = s1.yd();
 			}
 			if (y1 > pymax) {
 				y1 = pymax;
 			}
 			x1 = e.c - e.b * y1;
 			y2 = pymax;
-			if (s2 != null && s2.y < pymax) {
-				y2 = s2.y;
+			if (s2 != null && s2.yd() < pymax) {
+				y2 = s2.yd();
 			}
 
 			if (y2 < pymin) {
@@ -647,16 +650,16 @@ public class WB_Voronoi2D {
 			}
 		} else {
 			x1 = pxmin;
-			if (s1 != null && s1.x > pxmin) {
-				x1 = s1.x;
+			if (s1 != null && s1.xd() > pxmin) {
+				x1 = s1.xd();
 			}
 			if (x1 > pxmax) {
 				x1 = pxmax;
 			}
 			y1 = e.c - e.a * x1;
 			x2 = pxmax;
-			if (s2 != null && s2.x < pxmax) {
-				x2 = s2.x;
+			if (s2 != null && s2.xd() < pxmax) {
+				x2 = s2.xd();
 			}
 			if (x2 < pxmin) {
 				x2 = pxmin;
@@ -682,7 +685,7 @@ public class WB_Voronoi2D {
 				x2 = (e.c - y2) / e.a;
 			}
 		}
-		final WB_IndexedBisector2D ib = new WB_IndexedBisector2D();
+		final WB_IndexedBisector ib = new WB_IndexedBisector();
 		ib.start = new WB_Point(x1, y1);
 		ib.end = new WB_Point(x2, y2);
 		ib.i = e.indices[0];
@@ -708,7 +711,7 @@ public class WB_Voronoi2D {
 
 		e = el.voronoiEdge;
 		topsite = e.betweenSites[1];
-		if (p.x > topsite.x) {
+		if (p.xd() > topsite.xd()) {
 			toRightOfSite = true;
 		} else {
 			toRightOfSite = false;
@@ -721,14 +724,14 @@ public class WB_Voronoi2D {
 		}
 
 		if (e.a == 1.0) {
-			dyp = p.y - topsite.y;
-			dxp = p.x - topsite.x;
+			dyp = p.yd() - topsite.yd();
+			dxp = p.xd() - topsite.xd();
 			fast = false;
 			if ((!toRightOfSite & (e.b < 0.0)) | (toRightOfSite & (e.b >= 0.0))) {
 				above = dyp >= e.b * dxp;
 				fast = above;
 			} else {
-				above = p.x + p.y * e.b > e.c;
+				above = p.xd() + p.yd() * e.b > e.c;
 				if (e.b < 0.0) {
 					above = !above;
 				}
@@ -737,7 +740,7 @@ public class WB_Voronoi2D {
 				}
 			}
 			if (!fast) {
-				dxs = topsite.x - (e.betweenSites[0]).x;
+				dxs = topsite.xd() - (e.betweenSites[0]).xd();
 				above = e.b * (dxp * dxp - dyp * dyp) < dxs * dyp
 						* (1.0 + 2.0 * dxp / dxs + e.b * e.b);
 				if (e.b < 0.0) {
@@ -746,10 +749,10 @@ public class WB_Voronoi2D {
 			}
 		} else /* e.b==1.0 */
 		{
-			yl = e.c - e.a * p.x;
-			t1 = p.y - yl;
-			t2 = p.x - topsite.x;
-			t3 = yl - topsite.y;
+			yl = e.c - e.a * p.xd();
+			t1 = p.yd() - yl;
+			t2 = p.xd() - topsite.xd();
+			t3 = yl - topsite.yd();
 			above = t1 * t1 > t2 * t2 + t3 * t3;
 		}
 		return (el.ELpm == leftEnd ? above : !above);
@@ -791,8 +794,9 @@ public class WB_Voronoi2D {
 		xint = (e1.c * e2.b - e2.c * e1.b) / d;
 		yint = (e2.c * e1.a - e1.c * e2.a) / d;
 
-		if ((e1.betweenSites[1].y < e2.betweenSites[1].y)
-				|| (e1.betweenSites[1].y == e2.betweenSites[1].y && e1.betweenSites[1].x < e2.betweenSites[1].x)) {
+		if ((e1.betweenSites[1].yd() < e2.betweenSites[1].yd())
+				|| (e1.betweenSites[1].yd() == e2.betweenSites[1].yd() && e1.betweenSites[1]
+						.xd() < e2.betweenSites[1].xd())) {
 			el = el1;
 			e = e1;
 		} else {
@@ -800,7 +804,7 @@ public class WB_Voronoi2D {
 			e = e2;
 		}
 
-		right_of_site = xint >= e.betweenSites[1].x;
+		right_of_site = xint >= e.betweenSites[1].xd();
 		if ((right_of_site && el.ELpm == leftEnd)
 				|| (!right_of_site && el.ELpm == rightEnd)) {
 			return null;
@@ -809,8 +813,8 @@ public class WB_Voronoi2D {
 		// create a new site at the point of intersection - this is a new vector
 		// event waiting to happen
 		v = new WB_Point();
-		v.x = xint;
-		v.y = yint;
+		v._setX(xint);
+		v._setY(yint);
 		return (v);
 	}
 }

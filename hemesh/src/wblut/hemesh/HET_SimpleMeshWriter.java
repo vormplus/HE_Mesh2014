@@ -1,5 +1,6 @@
 package wblut.hemesh;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -9,9 +10,9 @@ import wblut.geom.WB_Point;
 
 /**
  * Helper class for HE_Export.saveToSimpleMesh.
- * 
+ *
  * @author Frederik Vanhoutte, W:Blut
- * 
+ *
  */
 
 public class HET_SimpleMeshWriter {
@@ -24,7 +25,7 @@ public class HET_SimpleMeshWriter {
 
 	/**
 	 * Begin save.
-	 * 
+	 *
 	 * @param stream
 	 *            the stream
 	 */
@@ -32,22 +33,24 @@ public class HET_SimpleMeshWriter {
 		try {
 			simpleMeshStream = stream;
 			handleBeginSave();
-		} catch (final Exception e) {
+		}
+		catch (final Exception e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
 	 * Begin save.
-	 * 
+	 *
 	 * @param fn
 	 *            the fn
 	 */
-	public void beginSave(final String fn) {
+	public void beginSave(final String fn, final String name) {
 		try {
-			simpleMeshStream = new FileOutputStream(fn);
+			simpleMeshStream = new FileOutputStream(new File(fn, name));
 			handleBeginSave();
-		} catch (final Exception e) {
+		}
+		catch (final Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -61,14 +64,15 @@ public class HET_SimpleMeshWriter {
 			simpleMeshWriter.close();
 			simpleMeshStream.flush();
 			simpleMeshStream.close();
-		} catch (final IOException e) {
+		}
+		catch (final IOException e) {
 			e.printStackTrace();
 		}
 	}
 
 	/**
 	 * Faces.
-	 * 
+	 *
 	 * @param f
 	 *            the f
 	 */
@@ -81,7 +85,7 @@ public class HET_SimpleMeshWriter {
 
 	/**
 	 * Face.
-	 * 
+	 *
 	 * @param f
 	 *            the f
 	 */
@@ -104,20 +108,21 @@ public class HET_SimpleMeshWriter {
 
 	/**
 	 * Vertices.
-	 * 
+	 *
 	 * @param v
 	 *            the v
 	 */
 	public void vertices(final WB_Point[] v) {
 		int i = 0;
 		for (i = 0; i < v.length; i++) {
-			simpleMeshWriter.println(v[i].x + " " + v[i].y + " " + v[i].z);
+			simpleMeshWriter.println(v[i].xd() + " " + v[i].yd() + " "
+					+ v[i].zd());
 		}
 	}
 
 	/**
 	 * Int value.
-	 * 
+	 *
 	 * @param v
 	 *            the v
 	 */

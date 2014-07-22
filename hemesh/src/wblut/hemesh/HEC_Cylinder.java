@@ -1,7 +1,7 @@
 package wblut.hemesh;
 
-import wblut.WB_Epsilon;
 import wblut.geom.WB_Vector;
+import wblut.math.WB_Epsilon;
 
 /**
  * Cylinder.
@@ -47,7 +47,7 @@ public class HEC_Cylinder extends HEC_Creator {
 		H = 0;
 		facets = 6;
 		steps = 1;
-		Z = WB_Vector.Y();
+		Z = new WB_Vector(WB_Vector.Y());
 		topcap = true;
 		bottomcap = true;
 		taper = 1.0;

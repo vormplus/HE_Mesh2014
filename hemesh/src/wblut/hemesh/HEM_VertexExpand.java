@@ -2,7 +2,7 @@ package wblut.hemesh;
 
 import java.util.Iterator;
 
-import javolution.util.FastList;
+import javolution.util.FastTable;
 import wblut.geom.WB_Vector;
 
 public class HEM_VertexExpand extends HEM_Modifier {
@@ -31,8 +31,7 @@ public class HEM_VertexExpand extends HEM_Modifier {
 		}
 		HE_Vertex v;
 		Iterator<HE_Vertex> vItr = mesh.vItr();
-		final FastList<WB_Vector> normals = new FastList<WB_Vector>(
-				mesh.getNumberOfVertices());
+		final FastTable<WB_Vector> normals = new FastTable<WB_Vector>();
 
 		while (vItr.hasNext()) {
 			v = vItr.next();
@@ -45,7 +44,7 @@ public class HEM_VertexExpand extends HEM_Modifier {
 
 			v = vItr.next();
 			n = vnItr.next();
-			v.pos._addSelf(n._mulSelf(d));
+			v.getPoint()._addSelf(n._mulSelf(d));
 		}
 		return mesh;
 	}
@@ -69,7 +68,7 @@ public class HEM_VertexExpand extends HEM_Modifier {
 		while (vItr.hasNext()) {
 
 			v = vItr.next();
-			v.pos._addSelf(v.getVertexNormal()._mulSelf(d));
+			v.getPoint()._addSelf(v.getVertexNormal()._mulSelf(d));
 		}
 
 		return selection.parent;

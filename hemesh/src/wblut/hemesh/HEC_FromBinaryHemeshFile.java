@@ -28,7 +28,7 @@ public class HEC_FromBinaryHemeshFile extends HEC_Creator {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.hemesh.HE_Creator#create()
 	 */
 	@Override
@@ -46,21 +46,19 @@ public class HEC_FromBinaryHemeshFile extends HEC_Creator {
 			final int numEdges = dis.readInt();
 			final int numFaces = dis.readInt();
 
-			final FastTable<HE_Vertex> vertices = new FastTable<HE_Vertex>(
-					numVertices);
+			final FastTable<HE_Vertex> vertices = new FastTable<HE_Vertex>();
 			for (int i = 0; i < numVertices; i++) {
 				vertices.add(new HE_Vertex());
 			}
-			final FastTable<HE_Halfedge> halfedges = new FastTable<HE_Halfedge>(
-					numHalfedges);
+			final FastTable<HE_Halfedge> halfedges = new FastTable<HE_Halfedge>();
 			for (int i = 0; i < numHalfedges; i++) {
 				halfedges.add(new HE_Halfedge());
 			}
-			final FastTable<HE_Edge> edges = new FastTable<HE_Edge>(numEdges);
+			final FastTable<HE_Edge> edges = new FastTable<HE_Edge>();
 			for (int i = 0; i < numEdges; i++) {
 				edges.add(new HE_Edge());
 			}
-			final FastTable<HE_Face> faces = new FastTable<HE_Face>(numFaces);
+			final FastTable<HE_Face> faces = new FastTable<HE_Face>();
 			for (int i = 0; i < numFaces; i++) {
 				faces.add(new HE_Face());
 			}
@@ -95,6 +93,7 @@ public class HEC_FromBinaryHemeshFile extends HEC_Creator {
 				}
 				if (hepairid > -1) {
 					he.setPair(halfedges.get(hepairid));
+					halfedges.get(hepairid).setPair(he);
 				}
 				if (eid > -1) {
 					he.setEdge(edges.get(eid));
@@ -119,11 +118,13 @@ public class HEC_FromBinaryHemeshFile extends HEC_Creator {
 					f.setHalfedge(halfedges.get(heid));
 				}
 			}
+			dis.close();
 			mesh.addVertices(vertices);
 			mesh.addHalfedges(halfedges);
 			mesh.addEdges(edges);
 			mesh.addFaces(faces);
-		} catch (final IOException ex) {
+		}
+		catch (final IOException ex) {
 			ex.printStackTrace();
 		}
 

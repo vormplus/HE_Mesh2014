@@ -1,6 +1,6 @@
 package wblut.geom;
 
-import wblut.WB_Epsilon;
+import wblut.math.WB_Epsilon;
 
 public class WB_Point4D implements Comparable<WB_Coordinate>,
 		WB_MutableCoordinate {
@@ -182,7 +182,7 @@ public class WB_Point4D implements Comparable<WB_Coordinate>,
 	}
 
 	public WB_Point4D moveByAndCopy(final WB_Point v) {
-		return new WB_Point4D(x + v.x, y + v.y, z + v.z, w);
+		return new WB_Point4D(x + v.xd(), y + v.yd(), z + v.zd(), w);
 	}
 
 	public WB_Point4D invert() {

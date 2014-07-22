@@ -1,6 +1,6 @@
 package wblut.geom;
 
-import wblut.WB_Epsilon;
+import wblut.math.WB_Epsilon;
 import wblut.math.WB_M33;
 import wblut.math.WB_Math;
 
@@ -16,7 +16,7 @@ public class WB_Sphere implements WB_Geometry {
 			.instance();
 
 	public WB_Sphere() {
-		this.center = geometryfactory.createPoint(center);
+		this.center = geometryfactory.createPoint();
 		this.radius = WB_Math.fastAbs(0);
 	}
 
@@ -70,8 +70,8 @@ public class WB_Sphere implements WB_Geometry {
 
 	@Override
 	public WB_Sphere apply(final WB_Transform T) {
-		return geometryfactory.createSphereWithRadius(center.applyAsPoint(T),
-				radius);
+		return geometryfactory.createSphereWithRadius(
+				center.applyAsPoint(T), radius);
 	}
 
 	/**
@@ -158,11 +158,11 @@ public class WB_Sphere implements WB_Geometry {
 				maxz = i;
 			}
 		}
-		final double dist2x = WB_Distance.sqDistanceToPoint3D(points[maxx],
+		final double dist2x = WB_Distance.getSqDistanceToPoint3D(points[maxx],
 				points[minx]);
-		final double dist2y = WB_Distance.sqDistanceToPoint3D(points[maxy],
+		final double dist2y = WB_Distance.getSqDistanceToPoint3D(points[maxy],
 				points[miny]);
-		final double dist2z = WB_Distance.sqDistanceToPoint3D(points[maxz],
+		final double dist2z = WB_Distance.getSqDistanceToPoint3D(points[maxz],
 				points[minz]);
 		int min = minx;
 		int max = maxx;
@@ -176,7 +176,7 @@ public class WB_Sphere implements WB_Geometry {
 		}
 		final WB_Point c = geometryfactory.createMidpoint(points[min],
 				points[max]);
-		final double r = WB_Distance.distanceToPoint3D(points[max], (c));
+		final double r = WB_Distance.getDistanceToPoint3D(points[max], (c));
 		return new WB_Sphere(c, r);
 
 	}
@@ -266,7 +266,7 @@ public class WB_Sphere implements WB_Geometry {
 		final int[] iminmax = extremePointsAlongDirection(points, numPoints, e);
 		final WB_Point minpt = points[iminmax[0]];
 		final WB_Point maxpt = points[iminmax[1]];
-		final double dist = Math.sqrt(WB_Distance3D.sqDistance(minpt, maxpt));
+		final double dist = WB_Distance.getDistance3D(minpt, maxpt);
 		return new WB_Sphere(minpt._addSelf(maxpt)._mulSelf(0.5), 0.5 * dist);
 	}
 
@@ -303,7 +303,7 @@ public class WB_Sphere implements WB_Geometry {
 			final double newRadius = (radius + dist) * 0.5;
 			final double k = (newRadius - radius) / dist;
 			radius = newRadius;
-			center._addSelf(k * d.x, k * d.y, k * d.z);
+			center._addSelf(k * d.xd(), k * d.yd(), k * d.zd());
 		}
 	}
 

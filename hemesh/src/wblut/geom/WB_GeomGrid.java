@@ -3,14 +3,15 @@ package wblut.geom;
 import java.util.ArrayList;
 
 import javolution.util.FastMap;
-import wblut.WB_Epsilon;
+import wblut.geom.interfaces.Segment;
+import wblut.math.WB_Epsilon;
 import wblut.math.WB_Math;
 
 public class WB_GeomGrid {
 
 	private final FastMap<Integer, WB_GeomGridCell> cells;
 
-	private final int W, H, WH, D, N;
+	private final int W, H, WH, D;
 
 	private final double dx, dy, dz, idx, idy, idz;
 
@@ -71,7 +72,7 @@ public class WB_GeomGrid {
 		this.H = H;
 		this.D = D;
 		WH = W * H;
-		N = W * H * D;
+
 		min = new WB_Point(minx, miny, minz);
 		max = new WB_Point(maxx, maxy, maxz);
 		aabb = new WB_AABB(min, max);
@@ -93,7 +94,8 @@ public class WB_GeomGrid {
 				cell = getNewCellForIndex(id);
 				cell.addPoint(p);
 				cells.put(index, cell);
-			} else {
+			}
+			else {
 				cell.addPoint(p);
 			}
 		}
@@ -108,7 +110,8 @@ public class WB_GeomGrid {
 			if (cell == null) {
 				fatcell.addPoint(p);
 				cells.put(id, fatcell);
-			} else {
+			}
+			else {
 				cell.addPoint(p);
 			}
 		}
@@ -151,7 +154,8 @@ public class WB_GeomGrid {
 			if (cell == null) {
 				fatcell.addSegment(S);
 				cells.put(id, fatcell);
-			} else {
+			}
+			else {
 				cell.addSegment(S);
 			}
 		}
@@ -166,7 +170,8 @@ public class WB_GeomGrid {
 				cell = getNewCellForIndex(id);
 				cell.addSegment(S);
 				cells.put(index, cell);
-			} else {
+			}
+			else {
 				cell.addSegment(S);
 			}
 		}
@@ -271,13 +276,14 @@ public class WB_GeomGrid {
 						cell = cells.get(neighbor);
 
 						if (cell != null) {
-							if (WB_Distance3D.sqDistance(p, cell.getAABB()) <= r2) {
+							if (WB_Distance.getSqDistance3D(p, cell.getAABB()) <= r2) {
 								result.add(cell);
 							}
-						} else if (all) {
+						}
+						else if (all) {
 							cell = getNewCellForIndex(id.i + di, id.j + dj,
 									id.k + dk);
-							if (WB_Distance3D.sqDistance(p, cell.getAABB()) <= r2) {
+							if (WB_Distance.getSqDistance3D(p, cell.getAABB()) <= r2) {
 								result.add(cell);
 							}
 
@@ -324,13 +330,14 @@ public class WB_GeomGrid {
 					if (neighbor > -1) {
 						cell = cells.get(neighbor);
 						if (cell != null) {
-							if (WB_Distance3D.sqDistance(cell.getAABB()
+							if (WB_Distance.getSqDistance3D(cell.getAABB()
 									.getCenter(), S) <= r2) {
 								result.add(cell);
 							}
-						} else if (all) {
+						}
+						else if (all) {
 							cell = getNewCellForIndex(di, dj, dk);
-							if (WB_Distance3D.sqDistance(cell.getAABB()
+							if (WB_Distance.getSqDistance3D(cell.getAABB()
 									.getCenter(), S) <= r2) {
 								result.add(cell);
 							}
@@ -387,27 +394,27 @@ public class WB_GeomGrid {
 
 	/**
 	 * Safeijk.
-	 * 
+	 *
 	 * @param p
 	 *            the p
 	 * @return the index
 	 */
 	private Index safeijk(final WB_Coordinate p) {
-		final int i = (int) ((p.xd() - min.x) * idx);
+		final int i = (int) ((p.xd() - min.xd()) * idx);
 		if (i < 0) {
 			return null;
 		}
 		if (i > W - 1) {
 			return null;
 		}
-		final int j = (int) ((p.yd() - min.y) * idy);
+		final int j = (int) ((p.yd() - min.yd()) * idy);
 		if (j < 0) {
 			return null;
 		}
 		if (j > H - 1) {
 			return null;
 		}
-		final int k = (int) ((p.zd() - min.z) * idz);
+		final int k = (int) ((p.zd() - min.zd()) * idz);
 		if (k < 0) {
 			return null;
 		}
@@ -420,19 +427,19 @@ public class WB_GeomGrid {
 
 	/**
 	 * Ijk.
-	 * 
+	 *
 	 * @param p
 	 *            the p
 	 * @return the index
 	 */
 	private Index ijk(final WB_Coordinate p) {
 
-		final int i = (p.xd() - min.x < 0) ? (int) ((p.xd() - min.x) * idx) - 1
-				: (int) ((p.xd() - min.x) * idx);
-		final int j = (p.yd() - min.y < 0) ? (int) ((p.yd() - min.y) * idy) - 1
-				: (int) ((p.yd() - min.y) * idy);
-		final int k = (p.zd() - min.z < 0) ? (int) ((p.zd() - min.z) * idz) - 1
-				: (int) ((p.zd() - min.z) * idz);
+		final int i = (p.xd() - min.xd() < 0) ? (int) ((p.xd() - min.xd()) * idx) - 1
+				: (int) ((p.xd() - min.xd()) * idx);
+		final int j = (p.yd() - min.yd() < 0) ? (int) ((p.yd() - min.yd()) * idy) - 1
+				: (int) ((p.yd() - min.yd()) * idy);
+		final int k = (p.zd() - min.zd() < 0) ? (int) ((p.zd() - min.zd()) * idz) - 1
+				: (int) ((p.zd() - min.zd()) * idz);
 		boolean inside = true;
 		if (i < 0) {
 			inside = false;
@@ -459,7 +466,7 @@ public class WB_GeomGrid {
 
 	/**
 	 * Indices traversed.
-	 * 
+	 *
 	 * @param segment
 	 *            the segment
 	 * @return the array list
@@ -467,7 +474,7 @@ public class WB_GeomGrid {
 	public ArrayList<Index> indicesTraversed(final Segment segment) {
 
 		final ArrayList<Index> indicesTraversed = new ArrayList<Index>();
-		if (!WB_Intersection.checkIntersection(segment, aabb)) {
+		if (!WB_Intersection.checkIntersection3D(segment, aabb)) {
 			return indicesTraversed;
 		}
 		final Index start = ijk(segment.getOrigin());
@@ -483,19 +490,19 @@ public class WB_GeomGrid {
 		double x, y, z;
 		Index current;
 		Index prev;
-		final int signx = (dir.x < 0) ? -1 : 1;
-		final int signy = (dir.y < 0) ? -1 : 1;
-		final int signz = (dir.z < 0) ? -1 : 1;
-		x = segment.getOrigin().x - min.x;
-		y = segment.getOrigin().y - min.y;
-		z = segment.getOrigin().z - min.z;
+		final int signx = (dir.xd() < 0) ? -1 : 1;
+		final int signy = (dir.yd() < 0) ? -1 : 1;
+		final int signz = (dir.zd() < 0) ? -1 : 1;
+		x = segment.getOrigin().xd() - min.xd();
+		y = segment.getOrigin().yd() - min.yd();
+		z = segment.getOrigin().zd() - min.zd();
 		current = ijk(segment.getOrigin());
-		final double idx = (WB_Epsilon.isZero(dir.x)) ? Double.POSITIVE_INFINITY
-				: 1.0 / dir.x;
-		final double idy = (WB_Epsilon.isZero(dir.y)) ? Double.POSITIVE_INFINITY
-				: 1.0 / dir.y;
-		final double idz = (WB_Epsilon.isZero(dir.z)) ? Double.POSITIVE_INFINITY
-				: 1.0 / dir.z;
+		final double idx = (WB_Epsilon.isZero(dir.xd())) ? Double.POSITIVE_INFINITY
+				: 1.0 / dir.xd();
+		final double idy = (WB_Epsilon.isZero(dir.yd())) ? Double.POSITIVE_INFINITY
+				: 1.0 / dir.yd();
+		final double idz = (WB_Epsilon.isZero(dir.zd())) ? Double.POSITIVE_INFINITY
+				: 1.0 / dir.zd();
 
 		final double tdx = signx * dx * idx;
 		final double tdy = signy * dy * idy;
@@ -514,12 +521,14 @@ public class WB_GeomGrid {
 
 				tnx += tdx;
 
-			} else if ((tny <= tnx) && (tny <= tnz)) {// y crossing comes first
+			}
+			else if ((tny <= tnx) && (tny <= tnz)) {// y crossing comes first
 				current.j += signy;
 
 				tny += tdy;
 
-			} else {// z crossing comes first
+			}
+			else {// z crossing comes first
 				current.k += signz;
 
 				tnz += tdz;
@@ -562,7 +571,7 @@ public class WB_GeomGrid {
 
 	/**
 	 * Cells traversed.
-	 * 
+	 *
 	 * @param segment
 	 *            the segment
 	 * @param all
@@ -576,7 +585,8 @@ public class WB_GeomGrid {
 			final WB_GeomGridCell cell = cells.get(index(id));
 			if (cell != null) {
 				result.add(cell);
-			} else if (all) {
+			}
+			else if (all) {
 				result.add(getNewCellForIndex(id));
 			}
 
@@ -587,21 +597,22 @@ public class WB_GeomGrid {
 
 	/**
 	 * Gets the new cell for index.
-	 * 
+	 *
 	 * @param id
 	 *            the id
 	 * @return the new cell for index
 	 */
 	private WB_GeomGridCell getNewCellForIndex(final Index id) {
-		return new WB_GeomGridCell(index(id), new WB_Point(id.i * dx + min.x,
-				id.j * dy + min.y, id.k * dz + min.z), new WB_Point(id.i * dx
-				+ min.x + dx, id.j * dy + min.y + dy, id.k * dz + min.z + dz));
+		return new WB_GeomGridCell(index(id), new WB_Point(
+				id.i * dx + min.xd(), id.j * dy + min.yd(), id.k * dz
+						+ min.zd()), new WB_Point(id.i * dx + min.xd() + dx,
+				id.j * dy + min.yd() + dy, id.k * dz + min.zd() + dz));
 
 	}
 
 	/**
 	 * Gets the new cell for index.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param j
@@ -612,9 +623,10 @@ public class WB_GeomGrid {
 	 */
 	private WB_GeomGridCell getNewCellForIndex(final int i, final int j,
 			final int k) {
-		return new WB_GeomGridCell(index(i, j, k), new WB_Point(i * dx + min.x,
-				j * dy + min.y, k * dz + min.z), new WB_Point(i * dx + min.x
-				+ dx, j * dy + min.y + dy, k * dz + min.z + dz));
+		return new WB_GeomGridCell(index(i, j, k), new WB_Point(i * dx
+				+ min.xd(), j * dy + min.yd(), k * dz + min.zd()),
+				new WB_Point(i * dx + min.xd() + dx, j * dy + min.yd() + dy, k
+						* dz + min.zd() + dz));
 
 	}
 

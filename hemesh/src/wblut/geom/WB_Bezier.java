@@ -1,7 +1,10 @@
 package wblut.geom;
 
+import wblut.math.WB_Bernstein;
+
 public class WB_Bezier implements WB_Curve {
 
+	private static WB_GeometryFactory gf = WB_GeometryFactory.instance();
 	protected WB_Point[] points;
 
 	protected int n;
@@ -27,50 +30,12 @@ public class WB_Bezier implements WB_Curve {
 	 * @see wblut.nurbs.WB_Curve#curvePoint(double)
 	 */
 	public WB_Point curvePoint(final double u) {
-		final double[] B = allBernstein(u);
+		final double[] B = WB_Bernstein.getBernsteinCoefficientsOfOrderN(u, n);
 		final WB_Point C = new WB_Point();
 		for (int k = 0; k <= n; k++) {
-			C._addSelf(B[k], points[k]);
+			C._addMulSelf(B[k], points[k]);
 		}
 		return C;
-	}
-
-	protected double[] allBernstein(final double u) {
-		final double[] B = new double[n + 1];
-		B[0] = 1.0;
-		final double u1 = 1.0 - u;
-		double saved, temp;
-		;
-		for (int j = 1; j <= n; j++) {
-			saved = 0.0;
-			for (int k = 0; k < j; k++) {
-				temp = B[k];
-				B[k] = saved + u1 * temp;
-				saved = u * temp;
-			}
-			B[j] = saved;
-		}
-
-		return B;
-	}
-
-	protected static double[] allBernstein(final double u, final int n) {
-		final double[] B = new double[n + 1];
-		B[0] = 1.0;
-		final double u1 = 1.0 - u;
-		double saved, temp;
-		;
-		for (int j = 1; j <= n; j++) {
-			saved = 0.0;
-			for (int k = 0; k < j; k++) {
-				temp = B[k];
-				B[k] = saved + u1 * temp;
-				saved = u * temp;
-			}
-			B[j] = saved;
-		}
-
-		return B;
 	}
 
 	public double n() {
@@ -110,8 +75,8 @@ public class WB_Bezier implements WB_Curve {
 		npoints[n + 1] = points[n];
 		final double inp = 1.0 / (n + 1);
 		for (int i = 1; i <= n; i++) {
-			npoints[i] = WB_Point
-					.interpolate(points[i], points[i - 1], i * inp);
+			npoints[i] = gf.createInterpolatedPoint(points[i], points[i - 1], i
+					* inp);
 
 		}
 		return new WB_Bezier(npoints);

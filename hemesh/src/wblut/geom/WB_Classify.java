@@ -1,8 +1,12 @@
 package wblut.geom;
 
-import wblut.WB_Epsilon;
+import wblut.math.WB_Epsilon;
 
 public class WB_Classify {
+
+	final public static WB_GeometryFactory geometryfactory = WB_GeometryFactory
+			.instance();
+
 	/**
 	 * Classify 2D point to 2D line.
 	 * 
@@ -12,10 +16,6 @@ public class WB_Classify {
 	 * @return WB_Classification.FRONT, WB_Classification.BACK,
 	 *         WB_Classification.ON
 	 */
-
-	final public static WB_GeometryFactory geometryfactory = WB_GeometryFactory
-			.instance();
-
 	public static WB_Classification classifyPointToLine2D(
 			final WB_Coordinate p, final WB_Line L) {
 
@@ -44,7 +44,7 @@ public class WB_Classify {
 	public static WB_Classification classifyPointToCircle2D(
 			final WB_Coordinate p, final WB_Circle C) {
 
-		final double dist = WB_Distance.distanceToPoint2D(p, C.getCenter());
+		final double dist = WB_Distance.getDistanceToPoint2D(p, C.getCenter());
 		if (WB_Epsilon.isZero(dist - C.getRadius())) {
 			return WB_Classification.ON;
 		} else if (dist < C.getRadius()) {
@@ -73,7 +73,7 @@ public class WB_Classify {
 		if (C1.equals(C2)) {
 			return WB_Classification.ON;
 		}
-		final double dist = WB_Distance.distanceToPoint2D(C1.getCenter(),
+		final double dist = WB_Distance.getDistanceToPoint2D(C1.getCenter(),
 				C2.getCenter());
 		final double rsum = C1.getRadius() + C2.getRadius();
 		final double rdiff = Math.abs(C1.getRadius() - C2.getRadius());
@@ -126,13 +126,9 @@ public class WB_Classify {
 			final WB_Coordinate q, final WB_Line L) {
 
 		final WB_Predicates pred = new WB_Predicates();
-		final double pside = Math.signum(pred.orientTri(
-				toDouble(L.getOrigin()), toDouble(L.getPoint(100.0)),
-				toDouble(p)));
-		final double qside = Math.signum(pred.orientTri(
-				toDouble(L.getOrigin()), toDouble(L.getPoint(100.0)),
-				toDouble(q)));
-
+		WB_Point pL = L.getPointOnLine(1.0);
+		final double pside = Math.signum(pred.orientTri(L.getOrigin(), pL, p));
+		final double qside = Math.signum(pred.orientTri(L.getOrigin(), pL, q));
 		if ((pside == 0) || (qside == 0) || (pside == qside)) {
 			return WB_Classification.SAME;
 		}
@@ -238,7 +234,7 @@ public class WB_Classify {
 
 	public static WB_Classification classifyPointToPlane(final WB_Plane P,
 			final WB_Coordinate p) {
-		if (P.getOrigin().equals(p)) {
+		if (WB_Epsilon.isZeroSq(WB_Distance.getDistanceToPlane3D(p, P))) {
 			return WB_Classification.ON;
 		}
 		final WB_Predicates predicates = new WB_Predicates();

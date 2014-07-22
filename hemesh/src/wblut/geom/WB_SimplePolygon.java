@@ -2,10 +2,14 @@ package wblut.geom;
 
 import java.util.List;
 
-import javolution.util.FastList;
-import wblut.WB_Epsilon;
+import javolution.util.FastTable;
+import wblut.geom.interfaces.SimplePolygon;
+import wblut.math.WB_Epsilon;
+import wblut.math.WB_Math;
 
 public class WB_SimplePolygon implements SimplePolygon {
+	public static final WB_GeometryFactory geometryfactory = WB_GeometryFactory
+			.instance();
 
 	/** Ordered array of WB_Point. */
 	private WB_Point[] points;
@@ -30,7 +34,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Instantiates a new WB_Polygon.
-	 * 
+	 *
 	 * @param points
 	 *            array of WB_Point
 	 * @param n
@@ -49,7 +53,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Instantiates a new WB_Polygon.
-	 * 
+	 *
 	 * @param points
 	 *            arrayList of WB_Point
 	 */
@@ -65,7 +69,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Set polygon.
-	 * 
+	 *
 	 * @param points
 	 *            array of WB_Point, no copies are made
 	 * @param n
@@ -82,10 +86,11 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Set polygon.
-	 * 
+	 *
 	 * @param poly
 	 *            source polygon, no copies are made
 	 */
+	@Override
 	public void set(final SimplePolygon poly) {
 		points = poly.getPoints();
 		n = poly.getN();
@@ -94,13 +99,13 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Set polygon.
-	 * 
+	 *
 	 * @param points
 	 *            arrayList of WB_Point, no copies are made
 	 * @param n
 	 *            number of points
 	 */
-	public void set(final FastList<? extends WB_Coordinate> points, final int n) {
+	public void set(final FastTable<? extends WB_Coordinate> points, final int n) {
 		this.points = new WB_Point[n];
 		for (int i = 0; i < n; i++) {
 			this.points[i] = new WB_Point(points.get(i));
@@ -111,7 +116,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Get deep copy.
-	 * 
+	 *
 	 * @return copy
 	 */
 	public WB_SimplePolygon get() {
@@ -125,7 +130,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Get shallow copy.
-	 * 
+	 *
 	 * @return copy
 	 */
 	public WB_SimplePolygon getNoCopy() {
@@ -135,16 +140,17 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Closest point on polygon to given point.
-	 * 
+	 *
 	 * @param p
 	 *            point
 	 * @return closest point of polygon
 	 */
+	@Override
 	public WB_Point closestPoint(final WB_Coordinate p) {
 		double d = Double.POSITIVE_INFINITY;
 		int id = -1;
 		for (int i = 0; i < n; i++) {
-			final double cd = WB_Distance3D.sqDistance(p, points[i]);
+			final double cd = WB_Distance.getSqDistance3D(p, points[i]);
 			if (cd < d) {
 				id = i;
 				d = cd;
@@ -155,16 +161,17 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Index of closest point on polygon to given point.
-	 * 
+	 *
 	 * @param p
 	 *            point
 	 * @return index of closest point of polygon
 	 */
+	@Override
 	public int closestIndex(final WB_Coordinate p) {
 		double d = Double.POSITIVE_INFINITY;
 		int id = -1;
 		for (int i = 0; i < n; i++) {
-			final double cd = WB_Distance3D.sqDistance(p, points[i]);
+			final double cd = WB_Distance.getSqDistance3D(p, points[i]);
 			if (cd < d) {
 				id = i;
 				d = cd;
@@ -175,9 +182,10 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Plane of polygon.
-	 * 
+	 *
 	 * @return plane
 	 */
+	@Override
 	public WB_Plane getPlane() {
 		if (updated) {
 			return P;
@@ -190,9 +198,9 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 			p0 = points[j];
 			p1 = points[i];
-			normal.x += (p0.y - p1.y) * (p0.z + p1.z);
-			normal.y += (p0.z - p1.z) * (p0.x + p1.x);
-			normal.z += (p0.x - p1.x) * (p0.y + p1.y);
+			normal._addSelf((p0.yd() - p1.yd()) * (p0.zd() + p1.zd()),
+					(p0.zd() - p1.zd()) * (p0.xd() + p1.xd()),
+					(p0.xd() - p1.xd()) * (p0.yd() + p1.yd()));
 			center._addSelf(p1);
 		}
 		normal._normalizeSelf();
@@ -205,11 +213,12 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Checks if point at index is convex.
-	 * 
+	 *
 	 * @param i
 	 *            index
 	 * @return WB.VertexType.FLAT,WB.VertexType.CONVEX,WB.VertexType.CONCAVE
 	 */
+	@Override
 	public WB_Convex isConvex(final int i) {
 
 		final WB_Vector vp = points[(i == 0) ? n - 1 : i - 1]
@@ -223,35 +232,63 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 		if (WB_Epsilon.isZeroSq(cross)) {
 			return WB_Convex.FLAT;
-		} else if (Math.acos(vp.dot(vn)) < Math.PI) {
+		}
+		else if (Math.acos(WB_Math.clamp(vp.dot(vn), -1, 1)) < Math.PI) {
 			return WB_Convex.CONVEX;
-		} else {
+		}
+		else {
 			return WB_Convex.CONCAVE;
 		}
 	}
 
 	/**
 	 * Triangulate polygon.
-	 * 
-	 * @return arrayList of WB_IndexedTriangle, points are not copied
+	 *
+	 * @return int[][] of faces
 	 */
-	public List<WB_IndexedTriangle> triangulate() {
-		final List<WB_IndexedTriangle> tris = new FastList<WB_IndexedTriangle>();
-		final WB_SimplePolygon2D tmp = toPolygon2D();
-		final List<WB_IndexedTriangle2D> tris2d = tmp.indexedTriangulate();
-		WB_IndexedTriangle2D tri2d;
-		for (int i = 0; i < tris2d.size(); i++) {
-			tri2d = tris2d.get(i);
-			tris.add(new WB_IndexedTriangle(tri2d.i1, tri2d.i2, tri2d.i3,
-					points));
 
+	@Override
+	public int[][] triangulate() {
+
+		final List<WB_Point> pts = new FastTable<WB_Point>();
+		for (int i = 0; i < n; i++) {
+			pts.add(points[i]);
 		}
-		return tris;
+
+		final WB_Triangulation2DWithPoints triangulation = WB_Triangulate
+				.getPolygonTriangulation2D(pts, true,
+						geometryfactory.createEmbeddedPlane(getPlane()));
+
+		final WB_KDTree<WB_Point, Integer> pointmap = new WB_KDTree<WB_Point, Integer>(
+				points.length);
+
+		for (int i = 0; i < points.length; i++) {
+			pointmap.add(points[i], i);
+		}
+
+		final int[][] triangles = triangulation.getTriangles();
+
+		final List<WB_Coordinate> tripoints = triangulation.getPoints();
+		final int[] intmap = new int[tripoints.size()];
+		int index = 0;
+		for (final WB_Coordinate point : tripoints) {
+			final int found = pointmap.getNearestNeighbor(point).value;
+			intmap[index++] = found;
+		}
+
+		for (final int[] T : triangles) {
+			T[0] = intmap[T[0]];
+			T[1] = intmap[T[1]];
+			T[2] = intmap[T[2]];
+		}
+
+		return triangles;
+
 	}
 
 	/**
 	 * Removes point.
-	 * 
+	 *
 	 * @param i
 	 *            index of point to remove
 	 * @return new WB_Polygon with point removed
@@ -270,7 +307,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Removes the point self.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 */
@@ -288,7 +325,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Adds point.
-	 * 
+	 *
 	 * @param i
 	 *            index to put point
 	 * @param p
@@ -310,7 +347,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Adds the point self.
-	 * 
+	 *
 	 * @param i
 	 *            the i
 	 * @param p
@@ -331,7 +368,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Refine polygon and smooth with simple Laplacian filter.
-	 * 
+	 *
 	 * @return new refined WB_Polygon
 	 */
 	public WB_SimplePolygon smooth() {
@@ -358,7 +395,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Trim convex polygon.
-	 * 
+	 *
 	 * @param poly
 	 *            the poly
 	 * @param d
@@ -391,7 +428,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 			// center of edge
 			origin = p1.add(p2)._mulSelf(0.5);
 			// offset cutting plane origin by the desired distance d
-			origin._addSelf(d * normal.x, d * normal.y, d * normal.z);
+			origin._addSelf(d * normal.xd(), d * normal.yd(), d * normal.zd());
 
 			splitPolygonInto(poly, new WB_Plane(origin, normal), frontPoly,
 					backPoly);
@@ -402,7 +439,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Trim convex polygon.
-	 * 
+	 *
 	 * @param d
 	 *            the d
 	 */
@@ -412,7 +449,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Trim convex polygon.
-	 * 
+	 *
 	 * @param poly
 	 *            the poly
 	 * @param d
@@ -444,7 +481,8 @@ public class WB_SimplePolygon implements SimplePolygon {
 			// center of edge
 			origin = p1.add(p2)._mulSelf(0.5);
 			// offset cutting plane origin by the desired distance d
-			origin._addSelf(d[j] * normal.x, d[j] * normal.y, d[j] * normal.z);
+			origin._addSelf(d[j] * normal.xd(), d[j] * normal.yd(), d[j]
+					* normal.zd());
 
 			splitPolygonInto(poly, new WB_Plane(origin, normal), frontPoly,
 					backPoly);
@@ -455,7 +493,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Trim convex polygon.
-	 * 
+	 *
 	 * @param d
 	 *            the d
 	 */
@@ -465,7 +503,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Split polygon into pre test.
-	 * 
+	 *
 	 * @param poly
 	 *            the poly
 	 * @param P
@@ -482,10 +520,10 @@ public class WB_SimplePolygon implements SimplePolygon {
 		int numBack = 0;
 
 		final WB_AABB AABB = new WB_AABB(poly.points);
-		if (WB_Intersection.checkIntersection(AABB, P)) {
+		if (WB_Intersection.checkIntersection3D(AABB, P)) {
 
-			final FastList<WB_Point> frontVerts = new FastList<WB_Point>(20);
-			final FastList<WB_Point> backVerts = new FastList<WB_Point>(20);
+			final FastTable<WB_Point> frontVerts = new FastTable<WB_Point>();
+			final FastTable<WB_Point> backVerts = new FastTable<WB_Point>();
 
 			final int numVerts = poly.n;
 			WB_Point a = poly.points[numVerts - 1];
@@ -499,7 +537,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 				bSide = P.classifyPointToPlane(b);
 				if (bSide == WB_Classification.FRONT) {
 					if (aSide == WB_Classification.BACK) {
-						i = WB_Intersection.getIntersection(b, a, P);
+						i = WB_Intersection.getIntersection3D(b, a, P);
 
 						/*
 						 * if (classifyPointToPlane(i.p1, P) !=
@@ -515,9 +553,10 @@ public class WB_SimplePolygon implements SimplePolygon {
 					}
 					frontVerts.add(b);
 					numFront++;
-				} else if (bSide == WB_Classification.BACK) {
+				}
+				else if (bSide == WB_Classification.BACK) {
 					if (aSide == WB_Classification.FRONT) {
-						i = WB_Intersection.getIntersection(a, b, P);
+						i = WB_Intersection.getIntersection3D(a, b, P);
 
 						/*
 						 * if (classifyPointToPlane(i.p1, P) !=
@@ -530,13 +569,15 @@ public class WB_SimplePolygon implements SimplePolygon {
 						numFront++;
 						backVerts.add((WB_Point) i.object);
 						numBack++;
-					} else if (aSide == WB_Classification.ON) {
+					}
+					else if (aSide == WB_Classification.ON) {
 						backVerts.add(a);
 						numBack++;
 					}
 					backVerts.add(b);
 					numBack++;
-				} else {
+				}
+				else {
 					frontVerts.add(b);
 					numFront++;
 					if (aSide == WB_Classification.BACK) {
@@ -550,7 +591,8 @@ public class WB_SimplePolygon implements SimplePolygon {
 			}
 			frontPoly.set(frontVerts, numFront);
 			backPoly.set(backVerts, numBack);
-		} else {
+		}
+		else {
 			int c = 0;
 			WB_Point a = poly.points[c];
 			WB_Classification aSide = P.classifyPointToPlane(a);
@@ -559,10 +601,12 @@ public class WB_SimplePolygon implements SimplePolygon {
 				frontPoly.set(poly.get());
 				backPoly.set(new WB_SimplePolygon());
 
-			} else if (aSide == WB_Classification.BACK) {
+			}
+			else if (aSide == WB_Classification.BACK) {
 				backPoly.set(poly.get());
 				frontPoly.set(new WB_SimplePolygon());
-			} else {
+			}
+			else {
 				c++;
 				do {
 					a = poly.points[c];
@@ -572,7 +616,8 @@ public class WB_SimplePolygon implements SimplePolygon {
 				if (aSide == WB_Classification.BACK) {
 					backPoly.set(poly.get());
 					frontPoly.set(new WB_SimplePolygon());
-				} else {
+				}
+				else {
 					frontPoly.set(poly.get());
 					backPoly.set(new WB_SimplePolygon());
 
@@ -586,7 +631,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Split polygon into.
-	 * 
+	 *
 	 * @param poly
 	 *            the poly
 	 * @param P
@@ -602,8 +647,8 @@ public class WB_SimplePolygon implements SimplePolygon {
 		int numFront = 0;
 		int numBack = 0;
 
-		final FastList<WB_Point> frontVerts = new FastList<WB_Point>(20);
-		final FastList<WB_Point> backVerts = new FastList<WB_Point>(20);
+		final FastTable<WB_Point> frontVerts = new FastTable<WB_Point>();
+		final FastTable<WB_Point> backVerts = new FastTable<WB_Point>();
 
 		final int numVerts = poly.n;
 		if (numVerts > 0) {
@@ -618,7 +663,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 				bSide = P.classifyPointToPlane(b);
 				if (bSide == WB_Classification.FRONT) {
 					if (aSide == WB_Classification.BACK) {
-						i = WB_Intersection.getIntersection(b, a, P);
+						i = WB_Intersection.getIntersection3D(b, a, P);
 
 						/*
 						 * if (classifyPointToPlane(i.p1, P) !=
@@ -634,9 +679,10 @@ public class WB_SimplePolygon implements SimplePolygon {
 					}
 					frontVerts.add(b);
 					numFront++;
-				} else if (bSide == WB_Classification.BACK) {
+				}
+				else if (bSide == WB_Classification.BACK) {
 					if (aSide == WB_Classification.FRONT) {
-						i = WB_Intersection.getIntersection(a, b, P);
+						i = WB_Intersection.getIntersection3D(a, b, P);
 
 						/*
 						 * if (classifyPointToPlane(i.p1, P) !=
@@ -649,13 +695,15 @@ public class WB_SimplePolygon implements SimplePolygon {
 						numFront++;
 						backVerts.add((WB_Point) i.object);
 						numBack++;
-					} else if (aSide == WB_Classification.ON) {
+					}
+					else if (aSide == WB_Classification.ON) {
 						backVerts.add(a);
 						numBack++;
 					}
 					backVerts.add(b);
 					numBack++;
-				} else {
+				}
+				else {
 					frontVerts.add(b);
 					numFront++;
 					if (aSide == WB_Classification.BACK) {
@@ -675,7 +723,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Split polygon into.
-	 * 
+	 *
 	 * @param P
 	 *            the p
 	 * @param frontPoly
@@ -691,7 +739,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Split polygon into pre test.
-	 * 
+	 *
 	 * @param P
 	 *            the p
 	 * @param frontPoly
@@ -707,12 +755,12 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.geom.WB_Polygon#getSegments()
 	 */
-	public FastList<WB_IndexedSegment> getSegments() {
-		final FastList<WB_IndexedSegment> segments = new FastList<WB_IndexedSegment>(
-				n);
+	@Override
+	public FastTable<WB_IndexedSegment> getSegments() {
+		final FastTable<WB_IndexedSegment> segments = new FastTable<WB_IndexedSegment>();
 		for (int i = 0, j = n - 1; i < n; j = i, i++) {
 			segments.add(new WB_IndexedSegment(i, j, points));
 
@@ -722,7 +770,7 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Negate.
-	 * 
+	 *
 	 * @return the w b_ explicit polygon
 	 */
 	public WB_SimplePolygon negate() {
@@ -736,14 +784,14 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/**
 	 * Negate.
-	 * 
+	 *
 	 * @param polys
 	 *            the polys
 	 * @return the list
 	 */
 	public static List<WB_SimplePolygon> negate(
 			final List<WB_SimplePolygon> polys) {
-		final List<WB_SimplePolygon> neg = new FastList<WB_SimplePolygon>();
+		final List<WB_SimplePolygon> neg = new FastTable<WB_SimplePolygon>();
 		for (int i = 0; i < polys.size(); i++) {
 			neg.add(polys.get(i).negate());
 		}
@@ -753,53 +801,52 @@ public class WB_SimplePolygon implements SimplePolygon {
 
 	/*
 	 * (non-Javadoc)
-	 * 
-	 * @see wblut.geom.WB_Polygon#toPolygon2D()
-	 */
-	public WB_SimplePolygon2D toPolygon2D() {
-		final WB_Point[] lpoints = new WB_Point[n];
-		for (int i = 0; i < n; i++) {
-			lpoints[i] = P.localPoint2D(points[i]);
-		}
-		return new WB_SimplePolygon2D(lpoints, n);
-
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.geom.WB_Polygon#getN()
 	 */
+	@Override
 	public int getN() {
 		return n;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.geom.WB_Polygon#getPoint(int)
 	 */
+	@Override
 	public WB_Point getPoint(final int i) {
 		return points[i];
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.geom.WB_Polygon#getIndex(int)
 	 */
+	@Override
 	public int getIndex(final int i) {
 		return i;
 	}
 
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see wblut.geom.WB_Polygon#getPoints()
 	 */
+	@Override
 	public WB_Point[] getPoints() {
 
 		return points;
+	}
+
+	public List<WB_Segment> toSegments() {
+		final List<WB_Segment> segments = new FastTable<WB_Segment>();
+		for (int i = 0, j = n - 1; i < n; j = i, i++) {
+			segments.add(new WB_Segment(points[j], points[i]));
+
+		}
+		return segments;
 	}
 
 }
