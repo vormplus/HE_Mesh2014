@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="hemesh"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="/Users/jan/Documents/workspace/libs/core.jar"/>
+	<classpathentry kind="lib" path="/Users/jan/Documents/workspace/libs/javolution-5.5.1.jar"/>
+	<classpathentry kind="lib" path="/Users/jan/Documents/workspace/libs/jts-1.13.jar"/>
+	<classpathentry kind="lib" path="/Users/jan/Documents/workspace/libs/trove-3.1a1.jar"/>
+	<classpathentry kind="output" path="hemesh"/>
+</classpath>
