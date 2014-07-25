@@ -24,27 +24,58 @@ public class HEC_Geodesic extends HEC_Creator {
 		b = c = 4;
 	}
 
+	/**
+	 * Creates a geodesic with a radius R.
+	 * @param R
+	 */
+	
 	public HEC_Geodesic(final double R) {
 		this();
 		this.radius = R;
 		b = c = 4;
 	}
 
+	/**
+	 * Sets the radius R of the geodesic.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Geodesic setRadius(final double R) {
 		this.radius = R;
 		return this;
 	}
 
+	/**
+	 * 
+	 * @param b
+	 * @return
+	 */
+	
 	public HEC_Geodesic setB(final int b) {
 		this.b = b;
 		return this;
 	}
 
+	/**
+	 * 
+	 * @param c
+	 * @return
+	 */
+	
 	public HEC_Geodesic setC(final int c) {
 		this.c = c;
 		return this;
 	}
 
+	/**
+	 * Sets the type of Geodesic.
+	 * Use one of the following types: HEC_Geodesic.TETRAHEDRON, HEC_Geodesic.OCTAHEDRON, HEC_Geodesic.CUBE, HEC_Geodesic.DODECAHEDRON, HEC_Geodesic.ICOSAHEDRON.
+	 * The default type is HEC_Geodesic.ICOSAHEDRON.
+	 * @param t
+	 * @return
+	 */
+	
 	public HEC_Geodesic setType(final int t) {
 		type = t;
 		return this;
