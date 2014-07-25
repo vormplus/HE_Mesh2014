@@ -29,14 +29,14 @@ public class HEC_Prism extends HEC_Creator {
 	private double radius;
 
 	/**
-	 * Instantiates a new hE c_ prism.
+	 * Instantiates a new HEC_Prism.
 	 */
 	public HEC_Prism() {
 		super();
 	}
 
 	/**
-	 * Instantiates a new hE c_ prism.
+	 * Instantiates a new HEC_Prism.
 	 * 
 	 * @param n
 	 *            the n
@@ -57,7 +57,7 @@ public class HEC_Prism extends HEC_Creator {
 	 * 
 	 * @param n
 	 *            the n
-	 * @return the hE c_ prism
+	 * @return the HEC_Prism
 	 */
 	public HEC_Prism setFacets(final int n) {
 		facets = n;
@@ -69,7 +69,7 @@ public class HEC_Prism extends HEC_Creator {
 	 * 
 	 * @param d
 	 *            the d
-	 * @return the hE c_ prism
+	 * @return the HEC_Prism
 	 */
 	public HEC_Prism setHeight(final double d) {
 		thickness = d;
@@ -81,7 +81,7 @@ public class HEC_Prism extends HEC_Creator {
 	 * 
 	 * @param r
 	 *            the r
-	 * @return the hE c_ prism
+	 * @return the HEC_Prism
 	 */
 	public HEC_Prism setRadius(final double r) {
 		radius = r;
