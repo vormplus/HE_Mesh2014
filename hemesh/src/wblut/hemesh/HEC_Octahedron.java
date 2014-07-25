@@ -4,26 +4,54 @@ public class HEC_Octahedron extends HEC_Creator {
 
 	private double R;
 
+	/**
+	 * Instantiates a new HEC_Octahedron.
+	 */
+	
 	public HEC_Octahedron() {
 		super();
 		R = 0f;
 	}
 
+	/**
+	 * Sets the edge length of the octahedron.
+	 * @param E
+	 * @return
+	 */
+	
 	public HEC_Octahedron setEdge(final double E) {
 		R = 0.70711 * E;
 		return this;
 	}
 
+	/**
+	 * Sets the inner radius of the octahedron.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Octahedron setInnerRadius(final double R) {
 		this.R = R * 1.732051;
 		return this;
 	}
 
+	/**
+	 * Sets the outer radius of the octahedron.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Octahedron setOuterRadius(final double R) {
 		this.R = R;
 		return this;
 	}
 
+	/**
+	 * Sets the mid radius of the octahedron.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Octahedron setMidRadius(final double R) {
 		this.R = R * 1.41422;
 		return this;
