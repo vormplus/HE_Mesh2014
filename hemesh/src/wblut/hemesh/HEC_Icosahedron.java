@@ -4,26 +4,54 @@ public class HEC_Icosahedron extends HEC_Creator {
 
 	private double R;
 
+	/**
+	 * Instantiates a new HEC_Icosahedron.
+	 */
+	
 	public HEC_Icosahedron() {
 		super();
 		R = 0f;
 	}
 
+	/**
+	 * Sets the edge length of the icosahedron.
+	 * @param E
+	 * @return
+	 */
+	
 	public HEC_Icosahedron setEdge(final double E) {
 		R = 0.9510565 * E;
 		return this;
 	}
 
+	/**
+	 * Sets the inner radius of the icosahedron.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Icosahedron setInnerRadius(final double R) {
 		this.R = R * 1.2584086;
 		return this;
 	}
 
+	/**
+	 * Sets the outer radius of the icosahedron.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Icosahedron setOuterRadius(final double R) {
 		this.R = R;
 		return this;
 	}
 
+	/**
+	 * Sets the mid radius of the icosahedron.
+	 * @param R
+	 * @return
+	 */
+	
 	public HEC_Icosahedron setMidRadius(final double R) {
 		this.R = R * 1.175570;
 		return this;
