@@ -16,6 +16,10 @@ public class HEC_Grid extends HEC_Creator {
 
 	private double WScale;
 
+	/**
+	 * Instantiates a new HEC_Grid
+	 */
+	
 	public HEC_Grid() {
 		super();
 		uSize = 0;
@@ -26,6 +30,14 @@ public class HEC_Grid extends HEC_Creator {
 
 	}
 
+	/**
+	 * Instantiates a new HEC_Grid with the number of cells in U and V direction and the size of the grid in U and V direction.
+	 * @param U Number of cells in the U direction of the grid.
+	 * @param V Number of cells in the V direction of the grid.
+	 * @param uSize Size of the grid in U direction.
+	 * @param vSize Size of the grid in V direction.
+	 */
+	
 	public HEC_Grid(final int U, final int V, final double uSize,
 			final double vSize) {
 		this();
@@ -36,26 +48,59 @@ public class HEC_Grid extends HEC_Creator {
 
 	}
 
+	/**
+	 * Sets the number of cells in the U direction of the grid.
+	 * @param U
+	 * @return
+	 */
+	
 	public HEC_Grid setU(final int U) {
 		this.U = Math.max(1, U);
 		return this;
 	}
 
+	/**
+	 * Sets the number of cells in the V direction of the grid.
+	 * @param V
+	 * @return
+	 */
+	
 	public HEC_Grid setV(final int V) {
 		this.V = Math.max(1, V);
 		return this;
 	}
 
+	/**
+	 * Sets the size of the grid in the U direction.
+	 * @param uSize
+	 * @return
+	 */
+	
 	public HEC_Grid setUSize(final double uSize) {
 		this.uSize = uSize;
 		return this;
 	}
 
+	/**
+	 * Sets the size of the grid in the V direction.
+	 * @param vSize
+	 * @return
+	 */
+	
 	public HEC_Grid setVSize(final double vSize) {
 		this.vSize = vSize;
 		return this;
 	}
 
+	/**
+	 * Sets the displacement of the grid in the W direction. You can use a float[][] or a double[][] array.
+	 * The size of the array should be equal to the number of vertices.
+	 * For instance: if you have a grid with 10 cells in the U direction and 5 cells in the V direction,
+	 * you will need an array with the size of float[11][6].
+	 * @param values
+	 * @return
+	 */
+	
 	public HEC_Grid setWValues(final double[][] values) {
 		this.values = values;
 		return this;
